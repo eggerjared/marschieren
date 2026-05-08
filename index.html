@@ -2675,8 +2675,43 @@ document.getElementById('soundBtn').addEventListener('click', (e) => {
   e.currentTarget.classList.toggle('on', state.sound);
   e.currentTarget.setAttribute('aria-pressed', state.sound);
   e.currentTarget.textContent = state.sound ? '🔊' : '🔇';
-  if (state.sound) ensureAudio();
+  if (state.sound) {
+    // AudioContext direkt im Click-Handler initialisieren (iOS-Restriktion!)
+    const ac = ensureAudio();
+    if (!ac) {
+      showAudioStatus('❌ Audio nicht verfügbar (Browser blockiert?)', 'error');
+      state.sound = false;
+      e.currentTarget.classList.remove('on');
+      e.currentTarget.textContent = '🔇';
+      return;
+    }
+    // Test-Pattern: Bass + Snare-Schlag, damit der User sofort hört dass Audio funktioniert
+    playBassDrum(1.0);
+    setTimeout(function(){ playSnare(0.8); }, 200);
+    setTimeout(function(){ playSnare(0.9); }, 400);
+    showAudioStatus('🔊 Sound aktiv — ' + ac.state + (ac.state === 'suspended' ? ' (klick auf Play, dann läuft\'s)' : ''), 'ok');
+  } else {
+    hideAudioStatus();
+  }
 });
+
+// Audio-Status-Toast für Feedback
+function showAudioStatus(msg, type) {
+  hideAudioStatus();
+  const t = document.createElement('div');
+  t.id = 'audioStatusToast';
+  t.textContent = msg;
+  t.style.cssText = 'position:fixed;top:14px;left:50%;transform:translateX(-50%);background:' +
+    (type === 'error' ? '#5a1a2a' : '#1a3a2a') +
+    ';color:#fff;padding:10px 16px;border-radius:10px;font-size:13px;font-weight:600;z-index:200;box-shadow:0 4px 16px rgba(0,0,0,0.4);border:1px solid ' +
+    (type === 'error' ? 'rgba(247,37,133,0.5)' : 'rgba(107,207,127,0.5)');
+  document.body.appendChild(t);
+  setTimeout(hideAudioStatus, 3000);
+}
+function hideAudioStatus() {
+  var existing = document.getElementById('audioStatusToast');
+  if (existing) existing.remove();
+}
 
 // flowToggle existiert nicht mehr (Flussdiagramm entfernt) — defensiv mit null-check
 const _flowTgl = document.getElementById('flowToggle');
