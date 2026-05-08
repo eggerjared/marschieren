@@ -2347,15 +2347,50 @@ function ensureAudio() {
   if (!state.audioCtx) {
     try {
       state.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      // Master-Limiter (verhindert Clipping bei mehreren parallelen Sounds)
+      // Master-Gain (laut, da iOS-Lautsprecher leise sind)
       state.audioMaster = state.audioCtx.createGain();
-      state.audioMaster.gain.value = 0.85;
-      state.audioMaster.connect(state.audioCtx.destination);
-      // Vorab-Buffer für Snare-Rauschen (sample, einmal erstellt)
+      state.audioMaster.gain.value = 1.0;
+
+      // ► iOS-Bypass für Stumm-Schalter:
+      // iOS blockiert Web Audio bei stummgeschaltetem Klingelton-Schalter.
+      // HTML-<audio>-Elemente mit MediaStream gelten als "Media" und ignorieren den Stumm-Schalter.
+      // Wir routen den Master-Gain via MediaStreamDestination → <audio>-Element.
+      let routedViaMediaStream = false;
+      if (typeof state.audioCtx.createMediaStreamDestination === 'function') {
+        try {
+          const dest = state.audioCtx.createMediaStreamDestination();
+          state.audioMaster.connect(dest);
+          const a = document.createElement('audio');
+          a.srcObject = dest.stream;
+          a.autoplay = true;
+          a.muted = false;
+          a.playsInline = true;
+          a.setAttribute('playsinline', '');
+          a.setAttribute('webkit-playsinline', '');
+          a.style.cssText = 'position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;';
+          document.body.appendChild(a);
+          // Falls autoplay versagt, beim nächsten Klick neu probieren (siehe unten)
+          a.play().catch(function(){});
+          state.audioMediaEl = a;
+          routedViaMediaStream = true;
+        } catch (e) { /* nicht unterstützt — fallback */ }
+      }
+
+      // Fallback: direkter Output (klingelton-Schalter blockiert dann auf iOS)
+      if (!routedViaMediaStream) {
+        state.audioMaster.connect(state.audioCtx.destination);
+      }
+
       state.noiseBuffer = createNoiseBuffer(state.audioCtx, 0.4);
     } catch (e) { return null; }
   }
-  if (state.audioCtx.state === 'suspended') state.audioCtx.resume();
+  if (state.audioCtx.state === 'suspended') {
+    try { state.audioCtx.resume(); } catch (e) {}
+  }
+  // Bei jedem User-Gesture nochmal versuchen das Audio-Element abzuspielen (iOS-Quirk)
+  if (state.audioMediaEl && state.audioMediaEl.paused) {
+    state.audioMediaEl.play().catch(function(){});
+  }
   return state.audioCtx;
 }
 
@@ -2689,7 +2724,12 @@ document.getElementById('soundBtn').addEventListener('click', (e) => {
     playBassDrum(1.0);
     setTimeout(function(){ playSnare(0.8); }, 200);
     setTimeout(function(){ playSnare(0.9); }, 400);
-    showAudioStatus('🔊 Sound aktiv — ' + ac.state + (ac.state === 'suspended' ? ' (klick auf Play, dann läuft\'s)' : ''), 'ok');
+    // Erkennen: iOS / iPadOS
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    let msg = '🔊 Sound aktiv';
+    if (isIOS) msg += ' — falls nichts zu hören: prüfe den <strong>Stumm-Schalter</strong> seitlich am Gerät und drehe die Lautstärke hoch';
+    else if (ac.state === 'suspended') msg += ' (klick auf Play)';
+    showAudioStatus(msg, 'ok');
   } else {
     hideAudioStatus();
   }
@@ -2700,13 +2740,14 @@ function showAudioStatus(msg, type) {
   hideAudioStatus();
   const t = document.createElement('div');
   t.id = 'audioStatusToast';
-  t.textContent = msg;
+  t.innerHTML = msg;
   t.style.cssText = 'position:fixed;top:14px;left:50%;transform:translateX(-50%);background:' +
     (type === 'error' ? '#5a1a2a' : '#1a3a2a') +
-    ';color:#fff;padding:10px 16px;border-radius:10px;font-size:13px;font-weight:600;z-index:200;box-shadow:0 4px 16px rgba(0,0,0,0.4);border:1px solid ' +
-    (type === 'error' ? 'rgba(247,37,133,0.5)' : 'rgba(107,207,127,0.5)');
+    ';color:#fff;padding:10px 16px;border-radius:10px;font-size:13px;font-weight:500;z-index:200;box-shadow:0 4px 16px rgba(0,0,0,0.4);border:1px solid ' +
+    (type === 'error' ? 'rgba(247,37,133,0.5)' : 'rgba(107,207,127,0.5)') +
+    ';max-width:90%;line-height:1.4;text-align:center;';
   document.body.appendChild(t);
-  setTimeout(hideAudioStatus, 3000);
+  setTimeout(hideAudioStatus, 6000);
 }
 function hideAudioStatus() {
   var existing = document.getElementById('audioStatusToast');
