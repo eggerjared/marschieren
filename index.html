@@ -1047,6 +1047,7 @@
     .legend-dot { width: 10px; height: 10px; }
     .controls { padding: 7px 9px; gap: 6px; border-radius: 10px; }
     .ctrl-btn { width: 36px; height: 36px; font-size: 14px; border-radius: 7px; }
+    #stepsBtn span:last-child { font-size: 11px !important; }
     .ctrl-btn.primary { width: 44px; height: 44px; font-size: 16px; }
     .speed-ctrl { width: 100%; justify-content: center; padding-top: 4px; border-top: 1px solid var(--card-border); margin-top: 2px; }
     .timeline-strip { padding: 8px 10px; }
@@ -1232,6 +1233,7 @@
     <button class="ctrl-btn" id="nextBtn" aria-label="Nächste Phase" title="Nächste Phase (→)">⏭</button>
     <button class="ctrl-btn toggle" id="loopBtn" aria-label="Wiederholen" aria-pressed="false" title="Endlos-Wiederholung">↺</button>
     <button class="ctrl-btn toggle" id="soundBtn" aria-label="Klang ein/aus" aria-pressed="false" title="Klick + Trommel ein/aus">🔊</button>
+    <button class="ctrl-btn toggle" id="stepsBtn" aria-label="Schrittzahl wählen" title="Anzahl Schritte für Flügelmusiker (4, 6 oder 8 — laut Wiki)"><span style="font-size:12px;line-height:1">👣</span><span id="stepsLabel" style="font-size:13px;font-weight:800;margin-left:2px">6</span></button>
     <div class="speed-ctrl">
       <span>Tempo</span>
       <input type="range" id="speedRange" min="0.4" max="2" step="0.1" value="1" aria-label="Geschwindigkeit">
@@ -1715,7 +1717,8 @@ const state = {
   audioCtx: null,
   role: 'all',
   lastBeatIndex: -1,
-  prevPositions: new Map()
+  prevPositions: new Map(),
+  wingSteps: 6  // Anzahl Schritte für Flügelmusiker (4, 6 oder 8 — Wiki-Vorgabe)
 };
 
 function currentVariant() { return VARIANTS[state.variantIdx]; }
@@ -1847,7 +1850,17 @@ function applyPhase(phase, animate = true) {
       g.style.transition = '';
     } else {
       const dist = Math.hypot(tgt.x - oldX, tgt.y - oldY);
-      if (dist > 25) spawnTrail(oldX, oldY, tgt.x, tgt.y, m.role === 'wing' ? '#ffb480' : '#7adfff', m.linie);
+      if (dist > 25) {
+        if (m.role === 'wing') {
+          // Flügelmusiker: zeige nummerierte Schritt-Markierungen
+          spawnStepMarkers(oldX, oldY, tgt.x, tgt.y, state.wingSteps, '#ffb480', m.linie * 80);
+        } else if (phase.formation === F.stretched && m.linie > 0 && m.role === 'center' && m.reihe === 2) {
+          // Tiefenabstand-Wachstum: nur einmal in der Mittelspalte (Reihe 3 = mittig) zeichnen
+          spawnDepthRuler(oldX, oldY, tgt.x, tgt.y, m.linie);
+        } else if (m.role !== 'wing') {
+          spawnTrail(oldX, oldY, tgt.x, tgt.y, '#7adfff', m.linie);
+        }
+      }
     }
     const isKurz = phase.kurz(m);
     g.classList.remove('kurzschritt', 'normalschritt');
@@ -1910,6 +1923,155 @@ function spawnTrail(fromX, fromY, toX, toY, color, staggerIndex = 0) {
     );
     anim.onfinish = () => path.remove();
   }, staggerIndex * 80);
+}
+
+// Schritt-Markierungen entlang des Pfads — zeigt Anzahl der Schritte (4, 6 oder 8)
+function spawnStepMarkers(fromX, fromY, toX, toY, count, color, startDelay) {
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  startDelay = startDelay || 0;
+  const totalDuration = phaseDurationMs() * 0.85;
+  const stepDelay = totalDuration / count;
+  // Verbindungslinie (gestrichelt) für die ganze Strecke
+  const line = document.createElementNS(SVG_NS, 'line');
+  line.setAttribute('x1', fromX); line.setAttribute('y1', fromY);
+  line.setAttribute('x2', toX); line.setAttribute('y2', toY);
+  line.setAttribute('stroke', color);
+  line.setAttribute('stroke-width', '1');
+  line.setAttribute('stroke-dasharray', '2 3');
+  line.setAttribute('opacity', '0');
+  annotationsG.appendChild(line);
+  setTimeout(() => {
+    line.animate([{opacity: 0}, {opacity: 0.35}], {duration: 200, fill: 'forwards'});
+  }, startDelay);
+
+  for (let i = 0; i < count; i++) {
+    const t = (i + 1) / count;
+    const x = fromX + (toX - fromX) * t;
+    const y = fromY + (toY - fromY) * t;
+
+    setTimeout(() => {
+      // Footprint (kleiner gefüllter Kreis mit Glow)
+      const fp = document.createElementNS(SVG_NS, 'circle');
+      fp.setAttribute('cx', x); fp.setAttribute('cy', y);
+      fp.setAttribute('r', 5);
+      fp.setAttribute('fill', color);
+      fp.setAttribute('stroke', '#fff');
+      fp.setAttribute('stroke-width', '1.5');
+      fp.setAttribute('opacity', '0');
+      annotationsG.appendChild(fp);
+
+      // Schritt-Nummer in der Mitte
+      const num = document.createElementNS(SVG_NS, 'text');
+      num.setAttribute('x', x); num.setAttribute('y', y + 2.5);
+      num.setAttribute('text-anchor', 'middle');
+      num.setAttribute('font-size', '8');
+      num.setAttribute('font-weight', '900');
+      num.setAttribute('fill', '#0b1020');
+      num.setAttribute('opacity', '0');
+      num.setAttribute('pointer-events', 'none');
+      num.textContent = (i + 1);
+      annotationsG.appendChild(num);
+
+      // Erscheinen mit Pop-Effekt
+      fp.animate([
+        { opacity: 0, r: 1 },
+        { opacity: 1, r: 7, offset: 0.5 },
+        { opacity: 1, r: 5 }
+      ], { duration: 280, fill: 'forwards' });
+      num.animate([{opacity: 0}, {opacity: 1}], { duration: 280, fill: 'forwards' });
+
+      // Fade-out später (mind. 600ms sichtbar)
+      const remainingTime = totalDuration - i * stepDelay;
+      setTimeout(() => {
+        const a1 = fp.animate([{opacity: 1}, {opacity: 0}], { duration: 500, fill: 'forwards' });
+        a1.onfinish = () => fp.remove();
+        const a2 = num.animate([{opacity: 1}, {opacity: 0}], { duration: 500, fill: 'forwards' });
+        a2.onfinish = () => num.remove();
+      }, Math.max(700, remainingTime + 300));
+    }, startDelay + i * stepDelay);
+  }
+  // Linie ausblenden zur gleichen Zeit wie der letzte Footprint
+  setTimeout(() => {
+    const a = line.animate([{opacity: 0.35}, {opacity: 0}], { duration: 500, fill: 'forwards' });
+    a.onfinish = () => line.remove();
+  }, startDelay + totalDuration + 300);
+}
+
+// Lineal zwischen Linien — visualisiert wachsenden Tiefenabstand mit Schritt-Tick-Marks
+function spawnDepthRuler(oldX, oldY, newX, newY, linie) {
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  // Lineal seitlich in der Mitte der Formation (rechts neben Reihe 3)
+  const rulerX = newX + 35;
+  const startY = oldY;
+  const endY = newY;
+  const heightGain = endY - startY;
+  if (heightGain < 10) return;
+
+  const totalDuration = phaseDurationMs() * 0.85;
+  const beats = state.beatsPerPhase * (currentPhase().duration || 1);
+  const startDelay = (linie - 1) * 80; // Stagger pro Linie
+
+  const group = document.createElementNS(SVG_NS, 'g');
+  group.setAttribute('opacity', '0');
+  annotationsG.appendChild(group);
+
+  // Hauptlinie
+  const mainLine = document.createElementNS(SVG_NS, 'line');
+  mainLine.setAttribute('x1', rulerX); mainLine.setAttribute('x2', rulerX);
+  mainLine.setAttribute('y1', startY); mainLine.setAttribute('y2', endY);
+  mainLine.setAttribute('stroke', '#7adfff');
+  mainLine.setAttribute('stroke-width', '1.2');
+  mainLine.setAttribute('opacity', '0.6');
+  group.appendChild(mainLine);
+
+  // Tick-Marks für jeden Beat
+  for (let b = 0; b <= beats; b++) {
+    const t = b / beats;
+    const ty = startY + heightGain * t;
+    const tick = document.createElementNS(SVG_NS, 'line');
+    tick.setAttribute('x1', rulerX - 4); tick.setAttribute('x2', rulerX + 4);
+    tick.setAttribute('y1', ty); tick.setAttribute('y2', ty);
+    tick.setAttribute('stroke', '#7adfff');
+    tick.setAttribute('stroke-width', '1.5');
+    tick.setAttribute('opacity', '0.7');
+    group.appendChild(tick);
+  }
+
+  // Beschriftung "Schritte"
+  const label = document.createElementNS(SVG_NS, 'text');
+  label.setAttribute('x', rulerX + 8);
+  label.setAttribute('y', startY + heightGain / 2);
+  label.setAttribute('font-size', '9');
+  label.setAttribute('font-weight', '700');
+  label.setAttribute('fill', '#7adfff');
+  label.setAttribute('opacity', '0.8');
+  label.textContent = beats + ' Schritte';
+  group.appendChild(label);
+
+  // Nummern bei jedem 4. Tick
+  for (let b = 0; b <= beats; b += 4) {
+    if (b === 0) continue;
+    const t = b / beats;
+    const ty = startY + heightGain * t;
+    const num = document.createElementNS(SVG_NS, 'text');
+    num.setAttribute('x', rulerX - 8);
+    num.setAttribute('y', ty + 3);
+    num.setAttribute('text-anchor', 'end');
+    num.setAttribute('font-size', '8');
+    num.setAttribute('fill', '#7adfff');
+    num.setAttribute('opacity', '0.65');
+    num.textContent = b;
+    group.appendChild(num);
+  }
+
+  setTimeout(() => {
+    group.animate([{opacity:0},{opacity:1}], {duration:300, fill:'forwards'});
+  }, startDelay);
+
+  setTimeout(() => {
+    const a = group.animate([{opacity:1},{opacity:0}], {duration:500, fill:'forwards'});
+    a.onfinish = () => group.remove();
+  }, startDelay + totalDuration);
 }
 
 function commandShockwave(originX, originY, color = '#ffc857') {
@@ -2411,11 +2573,25 @@ document.getElementById('soundBtn').addEventListener('click', (e) => {
   if (state.sound) ensureAudio();
 });
 
-document.getElementById('flowToggle').addEventListener('click', (e) => {
+// flowToggle existiert nicht mehr (Flussdiagramm entfernt) — defensiv mit null-check
+const _flowTgl = document.getElementById('flowToggle');
+if (_flowTgl) _flowTgl.addEventListener('click', (e) => {
   const fd = document.getElementById('flowDiagram');
+  if (!fd) return;
   const isExpanded = fd.dataset.expanded === 'true';
   fd.dataset.expanded = isExpanded ? 'false' : 'true';
   e.currentTarget.textContent = isExpanded ? '↕ Alle anzeigen' : '↕ Kompakt';
+});
+
+// Schrittzahl-Auswahl: zyklisch 4 → 6 → 8 → 4
+document.getElementById('stepsBtn').addEventListener('click', (e) => {
+  const cycle = [4, 6, 8];
+  const next = cycle[(cycle.indexOf(state.wingSteps) + 1) % cycle.length];
+  state.wingSteps = next;
+  document.getElementById('stepsLabel').textContent = next;
+  // visuelle Bestätigung (kurzer Flash)
+  e.currentTarget.classList.add('on');
+  setTimeout(() => e.currentTarget.classList.remove('on'), 250);
 });
 
 document.getElementById('roleFilter').addEventListener('change', (e) => {
