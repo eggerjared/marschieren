@@ -1250,7 +1250,7 @@
     <button class="ctrl-btn primary pulse" id="playBtn" aria-label="Abspielen" title="Abspielen / Pause (Leertaste)">▶</button>
     <button class="ctrl-btn" id="nextBtn" aria-label="Nächste Phase" title="Nächste Phase (→)">⏭</button>
     <button class="ctrl-btn toggle" id="loopBtn" aria-label="Wiederholen" aria-pressed="false" title="Endlos-Wiederholung">↺</button>
-    <button class="ctrl-btn toggle" id="soundBtn" aria-label="Klang ein/aus" aria-pressed="false" title="Klick + Trommel ein/aus">🔊</button>
+    <button class="ctrl-btn toggle" id="soundBtn" aria-label="Klang ein/aus" aria-pressed="false" title="Defilierstreich + Große Trommel ein/aus">🔊</button>
     <button class="ctrl-btn toggle" id="stepsBtn" aria-label="Schrittzahl wählen" title="Anzahl Schritte für Flügelmusiker (4, 6 oder 8 — laut Wiki)"><span style="font-size:12px;line-height:1">👣</span><span id="stepsLabel" style="font-size:13px;font-weight:800;margin-left:2px">6</span></button>
     <div class="speed-ctrl">
       <span>Tempo</span>
@@ -2148,13 +2148,17 @@ function setDrum(s) {
     flash.classList.add('flash');
     label.textContent = 'SIGNAL!';
     label.setAttribute('fill', '#ff7a9c');
-    if (state.sound) playBoom();
+    if (state.sound) playBassDrum(1.4);  // betontes Bass-Drum-Signal
     state.drumTimeout = setTimeout(() => flash.classList.remove('flash'), 450);
   } else if (s === 'normalschritt') {
     flash.classList.add('flash');
     label.textContent = 'NORMALSCHRITT';
     label.setAttribute('fill', '#6bcf7f');
-    if (state.sound) playBoom();
+    if (state.sound) {
+      // Doppelschlag: Bass + Snare-Wirbel danach (typisches Normalschritt-Zeichen)
+      playBassDrum(1.4);
+      setTimeout(() => playSnareRoll(), 80);
+    }
     state.drumTimeout = setTimeout(() => flash.classList.remove('flash'), 600);
   } else {
     label.textContent = '—';
@@ -2213,7 +2217,11 @@ function tick(ts) {
   if (beatIdx !== state.lastBeatIndex) {
     state.lastBeatIndex = beatIdx;
     updateBeats(beatIdx);
-    if (state.sound) playClick(beatIdx === 0 ? 1500 : 1100);
+    if (state.sound) {
+      // Marsch-Pattern: Bass-Drum auf Beat 1 (downbeat), Snare-Defilierstreich auf 2, 3, 4
+      if (beatIdx === 0) playBassDrum(0.7);
+      else playSnare(beatIdx === 2 ? 0.85 : 0.7);
+    }
   }
   updateTimelineCursor();
   if (state.phaseElapsed >= dur) {
@@ -2337,33 +2345,109 @@ function heroCard(num, title, subtitle) {
    ========================================================== */
 function ensureAudio() {
   if (!state.audioCtx) {
-    try { state.audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
-    catch { return null; }
+    try {
+      state.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      // Master-Limiter (verhindert Clipping bei mehreren parallelen Sounds)
+      state.audioMaster = state.audioCtx.createGain();
+      state.audioMaster.gain.value = 0.85;
+      state.audioMaster.connect(state.audioCtx.destination);
+      // Vorab-Buffer für Snare-Rauschen (sample, einmal erstellt)
+      state.noiseBuffer = createNoiseBuffer(state.audioCtx, 0.4);
+    } catch (e) { return null; }
   }
   if (state.audioCtx.state === 'suspended') state.audioCtx.resume();
   return state.audioCtx;
 }
-function playClick(freq = 1200) {
-  const ac = ensureAudio(); if (!ac) return;
-  const o = ac.createOscillator(), g = ac.createGain();
-  o.frequency.value = freq;
-  o.type = 'square';
-  g.gain.setValueAtTime(0.0001, ac.currentTime);
-  g.gain.exponentialRampToValueAtTime(0.08, ac.currentTime + 0.005);
-  g.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + 0.05);
-  o.connect(g); g.connect(ac.destination);
-  o.start(); o.stop(ac.currentTime + 0.08);
+
+function createNoiseBuffer(ac, durationSec) {
+  const len = Math.floor(ac.sampleRate * durationSec);
+  const buffer = ac.createBuffer(1, len, ac.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
+  return buffer;
 }
-function playBoom() {
+
+// Kleine Trommel (Defilierstreich) — gefiltertes Rauschen + tonale Komponente
+function playSnare(intensity) {
   const ac = ensureAudio(); if (!ac) return;
-  const o = ac.createOscillator(), g = ac.createGain();
-  o.frequency.setValueAtTime(140, ac.currentTime);
-  o.frequency.exponentialRampToValueAtTime(40, ac.currentTime + 0.3);
-  g.gain.setValueAtTime(0.4, ac.currentTime);
-  g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.5);
-  o.connect(g); g.connect(ac.destination);
-  o.start(); o.stop(ac.currentTime + 0.5);
+  intensity = intensity || 1;
+  const t = ac.currentTime;
+
+  // Tonale Komponente (Trommelfell-Schwingung, ~180 Hz)
+  const tone = ac.createOscillator();
+  tone.type = 'triangle';
+  tone.frequency.setValueAtTime(220, t);
+  tone.frequency.exponentialRampToValueAtTime(120, t + 0.04);
+  const toneGain = ac.createGain();
+  toneGain.gain.setValueAtTime(0.0001, t);
+  toneGain.gain.exponentialRampToValueAtTime(0.18 * intensity, t + 0.002);
+  toneGain.gain.exponentialRampToValueAtTime(0.0001, t + 0.06);
+  tone.connect(toneGain);
+  toneGain.connect(state.audioMaster);
+  tone.start(t); tone.stop(t + 0.08);
+
+  // Rausch-Komponente (Schnarrteppich = klassisches Snare-Rauschen)
+  const noise = ac.createBufferSource();
+  noise.buffer = state.noiseBuffer;
+  const hp = ac.createBiquadFilter();
+  hp.type = 'highpass';
+  hp.frequency.value = 1500;
+  const bp = ac.createBiquadFilter();
+  bp.type = 'bandpass';
+  bp.frequency.value = 4000;
+  bp.Q.value = 0.7;
+  const noiseGain = ac.createGain();
+  noiseGain.gain.setValueAtTime(0.0001, t);
+  noiseGain.gain.exponentialRampToValueAtTime(0.45 * intensity, t + 0.001);
+  noiseGain.gain.exponentialRampToValueAtTime(0.0001, t + 0.13);
+  noise.connect(hp); hp.connect(bp); bp.connect(noiseGain);
+  noiseGain.connect(state.audioMaster);
+  noise.start(t); noise.stop(t + 0.2);
 }
+
+// Defilier-Wirbel (kurzer Wirbel mit 4 schnellen Snare-Schlägen)
+function playSnareRoll() {
+  const ac = ensureAudio(); if (!ac) return;
+  for (let i = 0; i < 4; i++) {
+    setTimeout(() => playSnare(0.6), i * 40);
+  }
+}
+
+// Große Trommel — tiefer Boom mit prägnantem Attack
+function playBassDrum(intensity) {
+  const ac = ensureAudio(); if (!ac) return;
+  intensity = intensity || 1;
+  const t = ac.currentTime;
+
+  // Tiefer Sinus mit Pitch-Sweep (140 Hz → 40 Hz)
+  const osc = ac.createOscillator();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(160, t);
+  osc.frequency.exponentialRampToValueAtTime(45, t + 0.18);
+  const oscGain = ac.createGain();
+  oscGain.gain.setValueAtTime(0.0001, t);
+  oscGain.gain.exponentialRampToValueAtTime(0.85 * intensity, t + 0.005);
+  oscGain.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
+  osc.connect(oscGain);
+  oscGain.connect(state.audioMaster);
+  osc.start(t); osc.stop(t + 0.6);
+
+  // Click/Attack (kurzer Schlag-Akzent obendrauf)
+  const click = ac.createOscillator();
+  click.type = 'triangle';
+  click.frequency.value = 600;
+  const clickGain = ac.createGain();
+  clickGain.gain.setValueAtTime(0.0001, t);
+  clickGain.gain.exponentialRampToValueAtTime(0.15 * intensity, t + 0.001);
+  clickGain.gain.exponentialRampToValueAtTime(0.0001, t + 0.025);
+  click.connect(clickGain);
+  clickGain.connect(state.audioMaster);
+  click.start(t); click.stop(t + 0.04);
+}
+
+// Alias-Funktionen für Rückwärtskompatibilität (alte Aufrufe)
+function playClick() { playSnare(0.4); }
+function playBoom() { playBassDrum(1.1); }
 
 /* ==========================================================
    UI BUILDERS
