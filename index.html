@@ -432,6 +432,24 @@
     line-height: 1.5;
   }
   footer a { color: var(--accent-2); }
+  .disclaimer {
+    margin-top: 10px;
+    padding: 8px 12px;
+    max-width: 720px;
+    margin-left: auto;
+    margin-right: auto;
+    font-size: 10px;
+    line-height: 1.5;
+    color: var(--text-dim);
+    opacity: 0.6;
+    background: rgba(0,0,0,0.15);
+    border: 1px solid var(--card-border);
+    border-radius: 6px;
+    font-style: italic;
+  }
+  .disclaimer strong { color: var(--text-dim); font-style: normal; opacity: 0.85; }
+  .disclaimer a { font-style: normal; }
+  @media (max-width: 600px) { .disclaimer { font-size: 9px; padding: 6px 10px; } }
 
   /* ===== FLUSSDIAGRAMM (Schritt-für-Schritt-Anleitung) ===== */
   .flow-diagram {
@@ -1255,6 +1273,9 @@
   <footer>
     Inhaltliche Grundlage: <a href="https://wiki.blasmusik.at/pages/viewpage.action?pageId=9601801" target="_blank" rel="noopener">wiki.blasmusik.at — Abfallen und Aufmarschieren</a><br>
     Lernhilfe für Musikanten ohne Stabführer-Ausbildung. Beispiel-Marschblock 4 Linien × 5 Reihen — echte Kapellen variieren.
+    <div class="disclaimer">
+      <strong>Hinweis:</strong> Privates, nicht-kommerzielles Lern- und Demonstrationsprojekt — ausschließlich zu Test- und Schulungszwecken im eigenen Verein erstellt. Keine offizielle Verbindung zum Österreichischen Blasmusikverband. Inhalte basieren auf dem frei einsehbaren Wiki-Artikel; alle Rechte am Originaltext verbleiben beim Urheber. Bei Anliegen bezüglich Urheberrecht oder Korrekturwünschen bitte über das <a href="https://github.com/eggerjared/marschieren/issues" target="_blank" rel="noopener">GitHub-Repository</a> Kontakt aufnehmen.
+    </div>
   </footer>
 
 </div>
