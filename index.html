@@ -1,0 +1,2445 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0b1020">
+<title>Abfallen & Aufmarschieren — Visuell erklärt für Musikanten</title>
+<style>
+  :root {
+    --bg-1: #0b1020;
+    --bg-2: #1a1f3a;
+    --accent: #ffc857;
+    --accent-2: #4cc9f0;
+    --accent-3: #f72585;
+    --text: #f5f7fb;
+    --text-dim: #a8b0c8;
+    --card: rgba(255,255,255,0.06);
+    --card-border: rgba(255,255,255,0.12);
+    --good: #6bcf7f;
+    --warn: #ff9e3d;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: radial-gradient(ellipse at top, var(--bg-2) 0%, var(--bg-1) 60%, #050814 100%);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+  .app {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 2px 0;
+  }
+  header .title-block { text-align: left; min-width: 0; flex: 1; }
+  header h1 {
+    font-size: clamp(20px, 2.6vw, 28px);
+    font-weight: 800;
+    letter-spacing: -0.3px;
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    margin-bottom: 2px;
+    line-height: 1.15;
+  }
+  header p { color: var(--text-dim); font-size: 12px; line-height: 1.3; }
+  header .variant-selector { flex-shrink: 0; }
+  @media (max-width: 760px) {
+    header { flex-direction: column; align-items: stretch; }
+    header .title-block { text-align: center; }
+    header p { display: none; }
+  }
+
+  .variant-selector {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+  @media (max-width: 760px) {
+    .variant-selector { justify-content: center; }
+  }
+  .variant-btn {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    color: var(--text);
+    padding: 7px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    transition: all 0.15s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 36px;
+  }
+  .variant-btn:hover { background: rgba(255,255,255,0.1); transform: translateY(-1px); }
+  .variant-btn.active {
+    background: linear-gradient(135deg, rgba(255,200,87,0.25), rgba(76,201,240,0.25));
+    border-color: var(--accent);
+    box-shadow: 0 0 20px rgba(255,200,87,0.25);
+  }
+  .variant-btn .num {
+    background: var(--accent);
+    color: #000;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center; justify-content: center;
+    font-weight: 800;
+    font-size: 10px;
+  }
+
+  .phase-tabs {
+    display: flex;
+    gap: 6px;
+    justify-content: flex-start;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 6px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--card-border) transparent;
+  }
+  .phase-tabs::-webkit-scrollbar { height: 6px; }
+  .phase-tabs::-webkit-scrollbar-thumb { background: var(--card-border); border-radius: 3px; }
+  @media (min-width: 1100px) {
+    .phase-tabs { justify-content: center; flex-wrap: wrap; }
+  }
+  .phase-tab {
+    background: transparent;
+    border: 1px solid var(--card-border);
+    color: var(--text-dim);
+    padding: 10px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.15s;
+    flex: 0 0 auto;
+    min-height: 38px;
+    white-space: nowrap;
+  }
+  .phase-tab.active {
+    background: var(--card);
+    color: var(--text);
+    border-color: var(--accent-2);
+  }
+
+  .stage {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 12px;
+    align-items: stretch;
+  }
+  @media (max-width: 980px) { .stage { grid-template-columns: 1fr; } }
+
+  .formation-wrap {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 10px;
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    position: relative;
+    overflow: hidden;
+    transition: box-shadow 0.3s;
+  }
+  .formation-wrap.flash {
+    box-shadow: inset 0 0 80px rgba(255,200,87,0.25), 0 0 30px rgba(255,200,87,0.15);
+  }
+  .formation-wrap::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 0%, rgba(76,201,240,0.08), transparent 60%);
+    pointer-events: none;
+  }
+  svg.formation { width: 100%; height: auto; display: block; aspect-ratio: 10/7; }
+
+  .info-panel {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+  }
+
+  .takt-display {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(135deg, rgba(255,200,87,0.15), rgba(76,201,240,0.15));
+    border: 1px solid var(--card-border);
+    border-radius: 9px;
+    padding: 8px 12px;
+  }
+  .takt-display .label {
+    color: var(--text-dim);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .takt-display .value {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+    line-height: 1.1;
+  }
+
+  .beat-strip {
+    display: flex;
+    gap: 5px;
+    justify-content: center;
+  }
+  .beat-dot {
+    width: 11px; height: 11px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.12);
+    transition: all 0.1s;
+  }
+  .beat-dot.active {
+    background: var(--accent);
+    box-shadow: 0 0 12px var(--accent);
+    transform: scale(1.3);
+  }
+
+  .command-box {
+    background: rgba(255,255,255,0.03);
+    border-left: 3px solid var(--accent-2);
+    padding: 8px 10px;
+    border-radius: 6px;
+  }
+  .command-box .title {
+    font-size: 9px;
+    color: var(--accent-2);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 2px;
+    font-weight: 700;
+  }
+  .command-box .text {
+    font-size: 13px;
+    line-height: 1.35;
+    font-weight: 500;
+  }
+
+  .description {
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--text-dim);
+    background: rgba(0,0,0,0.2);
+    padding: 8px 10px;
+    border-radius: 6px;
+    min-height: 56px;
+  }
+  .description strong { color: var(--text); }
+  .hl-wing { color: #ffb480; font-weight: 600; }
+  .hl-center { color: #7adfff; font-weight: 600; }
+  .hl-stab { color: var(--accent); font-weight: 600; }
+  .hl-drum { color: var(--accent-3); font-weight: 600; }
+
+  /* Glossar-Tooltip */
+  .gloss {
+    border-bottom: 1px dotted var(--accent-2);
+    cursor: help;
+    position: relative;
+  }
+  .gloss::after {
+    content: attr(data-def);
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: #000;
+    color: #fff;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    line-height: 1.4;
+    width: max-content;
+    max-width: 240px;
+    z-index: 50;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+    border: 1px solid var(--card-border);
+  }
+  .gloss:hover::after, .gloss:focus::after { opacity: 1; }
+
+  /* Rollen-Filter */
+  .role-row {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 6px;
+    padding: 8px 10px;
+  }
+  .role-row .label {
+    font-size: 9px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .role-row select {
+    background: rgba(0,0,0,0.3);
+    color: var(--text);
+    border: 1px solid var(--card-border);
+    border-radius: 5px;
+    padding: 6px 8px;
+    font-size: 12px;
+    font-weight: 600;
+    width: 100%;
+    cursor: pointer;
+  }
+  .my-action {
+    margin-top: 4px;
+    padding: 6px 8px;
+    background: linear-gradient(135deg, rgba(255,200,87,0.18), rgba(247,37,133,0.12));
+    border-left: 3px solid var(--accent);
+    border-radius: 5px;
+    font-size: 11.5px;
+    line-height: 1.35;
+    color: var(--text);
+  }
+  .my-action.hidden { display: none; }
+  .my-action .icon { margin-right: 6px; }
+
+  /* Schritt-Meter */
+  .step-meter {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    background: rgba(0,0,0,0.15);
+    border-radius: 6px;
+    padding: 7px 10px;
+  }
+  .step-row { display: flex; align-items: center; gap: 6px; font-size: 11px; }
+  .step-row .lbl { width: 80px; color: var(--text-dim); flex-shrink: 0; }
+  .step-bar {
+    flex: 1;
+    height: 8px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+  }
+  .step-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.4s, background 0.4s;
+  }
+  .step-fill.normal { width: 100%; background: linear-gradient(90deg, var(--good), #4dbb6a); }
+  .step-fill.kurz { width: 42%; background: linear-gradient(90deg, var(--warn), #ff7a1a); }
+  .step-row.active .lbl { color: var(--text); font-weight: 700; }
+  .step-row.active .step-fill { animation: stepPulse 0.7s ease-in-out infinite; box-shadow: 0 0 10px currentColor; }
+  @keyframes stepPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.7; } }
+
+  .legend {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+  .legend-row { display: flex; align-items: center; gap: 7px; }
+  .legend-dot { width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0; }
+
+  .controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 8px 14px;
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    flex-wrap: wrap;
+  }
+  .ctrl-btn {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid var(--card-border);
+    color: var(--text);
+    width: 40px; height: 40px;
+    border-radius: 9px;
+    cursor: pointer;
+    font-size: 16px;
+    display: flex;
+    align-items: center; justify-content: center;
+    transition: all 0.15s;
+  }
+  .ctrl-btn:hover { background: rgba(255,255,255,0.15); transform: translateY(-1px); }
+  .ctrl-btn.primary {
+    background: linear-gradient(135deg, var(--accent), #ffa500);
+    color: #000;
+    width: 48px; height: 48px;
+    font-size: 19px;
+    box-shadow: 0 4px 18px rgba(255,165,0,0.35);
+  }
+  .ctrl-btn.primary:hover { box-shadow: 0 6px 24px rgba(255,165,0,0.5); }
+  .ctrl-btn.primary.pulse { animation: btnPulse 1.4s ease-in-out infinite; }
+  @keyframes btnPulse {
+    0%,100% { box-shadow: 0 4px 18px rgba(255,165,0,0.35); }
+    50% { box-shadow: 0 4px 28px rgba(255,165,0,0.7), 0 0 0 8px rgba(255,165,0,0.15); }
+  }
+  .ctrl-btn.toggle.on {
+    background: linear-gradient(135deg, rgba(76,201,240,0.4), rgba(76,201,240,0.2));
+    border-color: var(--accent-2);
+  }
+
+  .speed-ctrl {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-dim);
+    font-size: 12px;
+    min-height: 40px;
+  }
+  .speed-ctrl input[type=range] { width: 90px; accent-color: var(--accent); }
+  @media (min-width: 700px) {
+    .speed-ctrl input[type=range] { width: 110px; }
+  }
+
+  footer {
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 11px;
+    margin-top: 4px;
+    line-height: 1.5;
+  }
+  footer a { color: var(--accent-2); }
+
+  /* ===== FLUSSDIAGRAMM (Schritt-für-Schritt-Anleitung) ===== */
+  .flow-diagram {
+    background: linear-gradient(135deg, rgba(76,201,240,0.05), rgba(255,200,87,0.03));
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 10px 12px 8px;
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    position: relative;
+  }
+  .flow-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .flow-header h3 {
+    font-size: 12px;
+    color: var(--text);
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .flow-header .flow-toggle {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--card-border);
+    color: var(--text-dim);
+    padding: 3px 8px;
+    border-radius: 5px;
+    font-size: 10px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.15s;
+  }
+  .flow-header .flow-toggle:hover { background: rgba(255,255,255,0.1); color: var(--text); }
+  .flow-header .legend-mini {
+    display: flex; gap: 12px;
+    font-size: 11px; color: var(--text-dim);
+  }
+  .flow-header .legend-mini span { display: flex; align-items: center; gap: 4px; }
+  .flow-cols {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+    position: relative;
+    max-height: 220px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 2px 4px 2px 14px;
+    margin-left: -4px;
+    transition: max-height 0.4s cubic-bezier(0.4,0,0.2,1);
+    scrollbar-width: thin;
+    scrollbar-color: var(--card-border) transparent;
+    scroll-behavior: smooth;
+  }
+  .flow-cols::-webkit-scrollbar { width: 5px; }
+  .flow-cols::-webkit-scrollbar-thumb { background: var(--card-border); border-radius: 3px; }
+  .flow-cols::-webkit-scrollbar-track { background: transparent; }
+  .flow-diagram[data-expanded="true"] .flow-cols { max-height: none; }
+  @media (min-width: 850px) {
+    .flow-cols { grid-template-columns: 1fr 1fr; gap: 20px; max-height: 240px; }
+    .flow-diagram[data-expanded="true"] .flow-cols { max-height: none; }
+  }
+  .flow-col {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    position: relative;
+  }
+  .flow-col-title {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .flow-col-title .pill {
+    padding: 2px 8px;
+    border-radius: 100px;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.8px;
+  }
+  .flow-col.abfallen .pill {
+    background: linear-gradient(135deg, rgba(247,37,133,0.25), rgba(247,37,133,0.1));
+    color: #ff9ec7;
+    border: 1px solid rgba(247,37,133,0.4);
+  }
+  .flow-col.aufmarsch .pill {
+    background: linear-gradient(135deg, rgba(107,207,127,0.25), rgba(107,207,127,0.1));
+    color: #9be3ad;
+    border: 1px solid rgba(107,207,127,0.4);
+  }
+  .flow-col-title .arrow {
+    color: var(--text-dim); font-size: 14px;
+  }
+
+  .flow-step {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    padding: 6px 10px;
+    display: grid;
+    grid-template-columns: auto auto 1fr;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+  }
+  .flow-step:hover {
+    background: rgba(255,255,255,0.08);
+    transform: translateX(2px);
+  }
+  .flow-step.active {
+    background: linear-gradient(135deg, rgba(255,200,87,0.18), rgba(76,201,240,0.12));
+    border-color: var(--accent);
+    box-shadow: 0 0 16px rgba(255,200,87,0.35), inset 0 0 16px rgba(255,200,87,0.06);
+    transform: translateX(4px);
+  }
+  .flow-step.active::before {
+    content: '▶';
+    position: absolute;
+    left: -12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--accent);
+    font-size: 11px;
+    animation: flowPulse 1.2s ease-in-out infinite;
+  }
+  @keyframes flowPulse {
+    0%, 100% { opacity: 0.5; transform: translate(0, -50%); }
+    50% { opacity: 1; transform: translate(3px, -50%); }
+  }
+  .flow-step.played { opacity: 0.45; }
+  .flow-step.played:hover { opacity: 0.8; }
+
+  .flow-takt {
+    background: rgba(255,200,87,0.12);
+    color: var(--accent);
+    font-weight: 800;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 5px;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    border: 1px solid rgba(255,200,87,0.25);
+    min-width: 50px;
+    text-align: center;
+  }
+  .flow-step.active .flow-takt {
+    background: var(--accent);
+    color: #0b1020;
+    box-shadow: 0 0 8px var(--accent);
+  }
+
+  .flow-icon {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 15px;
+    line-height: 1;
+    min-width: 26px;
+    justify-content: center;
+  }
+  .flow-icon .stab { color: #ffd87a; }
+  .flow-icon .grund { color: #ffc857; }
+  .flow-icon .drum { color: #ff7a9c; font-size: 12px; }
+  .flow-icon .drum-norm { color: #6bcf7f; font-size: 12px; }
+
+  .flow-text { min-width: 0; }
+  .flow-name {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.2;
+  }
+  .flow-cmd {
+    font-size: 10px;
+    color: var(--text-dim);
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .flow-step.active .flow-cmd { color: var(--text); }
+
+  .flow-arrow {
+    height: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-dim);
+    font-size: 11px;
+    position: relative;
+    user-select: none;
+  }
+  .flow-arrow::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    top: 0; bottom: 0;
+    width: 2px;
+    background: linear-gradient(to bottom, transparent, var(--card-border), transparent);
+  }
+  .flow-arrow span {
+    position: relative;
+    background: var(--bg-1);
+    padding: 0 6px;
+    color: var(--accent-2);
+    font-weight: 800;
+  }
+
+  /* Bridge zwischen den beiden Spalten (Marsch durch enge Stelle) */
+  .flow-bridge {
+    grid-column: 1 / -1;
+    text-align: center;
+    margin: -4px 0;
+    padding: 8px 12px;
+    background: linear-gradient(135deg, rgba(76,201,240,0.10), rgba(255,200,87,0.06));
+    border: 1px dashed var(--card-border);
+    border-radius: 8px;
+    color: var(--text-dim);
+    font-size: 11px;
+    font-style: italic;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .flow-bridge:hover { background: rgba(255,255,255,0.08); }
+  .flow-bridge.active {
+    background: linear-gradient(135deg, rgba(76,201,240,0.25), rgba(255,200,87,0.15));
+    border-style: solid;
+    border-color: var(--accent-2);
+    color: var(--text);
+    box-shadow: 0 0 16px rgba(76,201,240,0.3);
+  }
+  .flow-bridge .icon { font-size: 18px; margin-right: 6px; }
+
+  @media (max-width: 600px) {
+    .flow-step { padding: 8px 10px; gap: 8px; }
+    .flow-takt { font-size: 10px; padding: 3px 6px; min-width: 48px; }
+    .flow-name { font-size: 12px; }
+    .flow-cmd { font-size: 10px; }
+    .flow-icon { font-size: 16px; }
+  }
+
+  /* ===== ECHTE NOTENZEILE (musikalische Notation) ===== */
+  .notation-strip {
+    background: linear-gradient(135deg, rgba(76,201,240,0.06), rgba(255,200,87,0.04));
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    padding: 12px 14px 10px;
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    position: relative;
+  }
+  .notation-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    font-size: 11px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+  }
+  .notation-header .legend-mini {
+    display: flex;
+    gap: 12px;
+    font-size: 10px;
+    color: var(--text-dim);
+    text-transform: none;
+    letter-spacing: 0;
+    align-items: center;
+  }
+  .notation-header .legend-mini span { display: flex; align-items: center; gap: 4px; }
+  .notation-scroll {
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+    padding-bottom: 4px;
+  }
+  .notation-scroll::-webkit-scrollbar { height: 6px; }
+  .notation-scroll::-webkit-scrollbar-thumb { background: var(--card-border); border-radius: 3px; }
+  .notation-scroll svg { display: block; }
+  .nota-band-rect { cursor: pointer; transition: filter 0.2s, opacity 0.2s; }
+  .nota-band-rect:hover { filter: brightness(1.3); }
+  .nota-band-rect.active {
+    filter: brightness(1.4) drop-shadow(0 0 8px var(--accent));
+  }
+  .nota-band-rect.played { opacity: 0.45; }
+  .nota-takt-num { font-size: 10px; }
+  .nota-cursor {
+    transition: transform 0.05s linear;
+    pointer-events: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .nota-cursor { transition: none !important; }
+  }
+
+  /* alte timeline-strip class als alias behalten — wird nicht mehr verwendet */
+  .timeline-strip {
+    background: linear-gradient(135deg, rgba(76,201,240,0.05), rgba(255,200,87,0.03));
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 10px 12px;
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    position: relative;
+  }
+  .timeline-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+    font-size: 10px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .timeline-header .legend-mini {
+    display: flex;
+    gap: 10px;
+    font-size: 10px;
+    color: var(--text-dim);
+    text-transform: none;
+    letter-spacing: 0;
+  }
+  .timeline-header .legend-mini span { display: flex; align-items: center; gap: 4px; }
+  .timeline-track {
+    display: flex;
+    gap: 4px;
+    position: relative;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 4px 2px 4px 2px;
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+  .timeline-track::-webkit-scrollbar { height: 5px; }
+  .timeline-track::-webkit-scrollbar-thumb { background: var(--card-border); border-radius: 3px; }
+  .timeline-track::-webkit-scrollbar-track { background: transparent; }
+
+  .ti-block {
+    flex: 1 0 78px;
+    min-width: 78px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    padding: 6px 6px 5px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .ti-block:hover { background: rgba(255,255,255,0.08); }
+  .ti-block.active {
+    background: linear-gradient(135deg, rgba(255,200,87,0.20), rgba(76,201,240,0.18));
+    border-color: var(--accent);
+    box-shadow: 0 0 14px rgba(255,200,87,0.3), inset 0 0 12px rgba(255,200,87,0.1);
+  }
+  .ti-block.active .ti-takt-num { color: var(--accent); }
+  .ti-block.played { opacity: 0.55; }
+
+  .ti-takt-num {
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--text-dim);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.5px;
+  }
+  .ti-takt-num .small { font-size: 9px; font-weight: 600; opacity: 0.7; margin-left: 2px; }
+  .ti-icons {
+    display: flex;
+    gap: 3px;
+    height: 14px;
+    align-items: center;
+    margin: 2px 0;
+  }
+  .ti-ic {
+    font-size: 11px;
+    line-height: 1;
+    padding: 1px 4px;
+    border-radius: 3px;
+    background: rgba(0,0,0,0.25);
+  }
+  .ti-ic.stab { color: #ffd87a; border: 1px solid rgba(255,200,87,0.3); }
+  .ti-ic.drum { color: #ff7a9c; border: 1px solid rgba(247,37,133,0.3); }
+  .ti-beats {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    margin-top: 4px;
+    height: 10px;
+  }
+  .ti-beat {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.18);
+    transition: all 0.1s;
+  }
+  .ti-beat.played { background: var(--accent-2); opacity: 0.5; }
+  .ti-beat.current {
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent);
+    transform: scale(1.5);
+  }
+  .ti-name {
+    font-size: 9px;
+    color: var(--text-dim);
+    margin-top: 4px;
+    line-height: 1.2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .ti-block.active .ti-name { color: var(--text); }
+
+  .ti-cursor {
+    position: absolute;
+    top: 4px; bottom: 4px;
+    width: 2px;
+    background: linear-gradient(to bottom,
+      transparent 0%,
+      var(--accent-2) 20%,
+      var(--accent) 50%,
+      var(--accent-2) 80%,
+      transparent 100%);
+    box-shadow: 0 0 12px var(--accent), 0 0 24px var(--accent-2);
+    pointer-events: none;
+    transition: left 0.05s linear;
+    border-radius: 2px;
+    z-index: 5;
+  }
+  .ti-cursor::before {
+    content: '';
+    position: absolute;
+    top: -3px;
+    left: -4px;
+    width: 10px; height: 10px;
+    background: var(--accent);
+    border-radius: 50%;
+    box-shadow: 0 0 12px var(--accent);
+  }
+  .ti-cursor::after {
+    content: '';
+    position: absolute;
+    bottom: -3px;
+    left: -4px;
+    width: 10px; height: 10px;
+    background: var(--accent);
+    border-radius: 50%;
+    box-shadow: 0 0 12px var(--accent);
+  }
+
+  .keyboard-hint {
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 10px;
+    opacity: 0.6;
+    margin-top: 2px;
+  }
+  @media (max-width: 760px) { .keyboard-hint { display: none; } }
+  kbd {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid var(--card-border);
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-family: monospace;
+    font-size: 11px;
+  }
+
+  /* SVG element styles */
+  .musician {
+    transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s;
+  }
+  .musician.dim { opacity: 0.18; }
+  .musician.spotlight .ring-spot { opacity: 1; }
+  .ring-spot { opacity: 0; transition: opacity 0.3s; }
+  .musician circle, .musician path {
+    transition: fill 0.3s, stroke 0.3s, r 0.3s;
+  }
+  .musician.kurzschritt circle:not(.ring-spot) {
+    stroke-dasharray: 3 2;
+  }
+  .musician.kurzschritt .pulse { animation: bouncekurz 0.8s ease-in-out infinite; }
+  .musician.normalschritt .pulse { animation: bouncenormal 0.6s ease-in-out infinite; }
+  @keyframes bouncenormal { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+  @keyframes bouncekurz { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-1.5px); } }
+  .baton { transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+  .baton line, .baton circle { transition: stroke 0.3s, fill 0.3s; }
+  .drum-flash { opacity: 0; transition: opacity 0.15s; }
+  .drum-flash.flash { opacity: 1; }
+  .lane-stripe { animation: laneScroll 1.4s linear infinite; }
+  @keyframes laneScroll { from { stroke-dashoffset: 0; } to { stroke-dashoffset: -28; } }
+
+  /* Hero card beim Variant-Wechsel */
+  .hero-card {
+    position: fixed; inset: 0;
+    display: grid;
+    place-items: center;
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+    background: rgba(11,16,32,0.65);
+    z-index: 100;
+    pointer-events: none;
+  }
+  .hero-card .inner {
+    text-align: center;
+    padding: 40px 60px;
+    background: linear-gradient(135deg, rgba(255,200,87,0.15), rgba(76,201,240,0.15));
+    border: 1px solid var(--card-border);
+    border-radius: 24px;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.5);
+  }
+  .hero-card .num {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+  .hero-card h2 {
+    font-size: clamp(22px, 4vw, 36px);
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    margin-bottom: 8px;
+  }
+  .hero-card p { color: var(--text-dim); font-size: 14px; max-width: 420px; }
+
+  /* Quiz */
+  .quiz-section {
+    background: linear-gradient(135deg, rgba(76,201,240,0.10), rgba(255,200,87,0.06));
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+  }
+  .quiz-section h3 {
+    font-size: 15px;
+    margin-bottom: 2px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .quiz-section .sub { color: var(--text-dim); font-size: 12px; margin-bottom: 12px; }
+  .quiz-q { margin-bottom: 14px; }
+  .quiz-q .qtext { font-weight: 600; margin-bottom: 6px; font-size: 13px; }
+  .quiz-q .opts { display: flex; flex-direction: column; gap: 5px; }
+  .quiz-opt {
+    background: rgba(0,0,0,0.25);
+    border: 1px solid var(--card-border);
+    color: var(--text);
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    text-align: left;
+    transition: all 0.15s;
+    min-height: 36px;
+  }
+  .quiz-opt:hover { background: rgba(255,255,255,0.08); }
+  .quiz-opt.correct { background: rgba(107,207,127,0.2); border-color: var(--good); color: var(--good); }
+  .quiz-opt.wrong { background: rgba(247,37,133,0.2); border-color: var(--accent-3); }
+  .quiz-feedback { font-size: 11px; color: var(--text-dim); margin-top: 4px; min-height: 14px; }
+  .quiz-score {
+    text-align: center;
+    margin-top: 10px;
+    font-size: 13px;
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  /* Reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    .musician, .baton, .formation-wrap { transition-duration: 0.01ms !important; }
+    .musician.kurzschritt .pulse, .musician.normalschritt .pulse { animation: none !important; }
+    .lane-stripe { animation: none !important; }
+    .ctrl-btn.primary.pulse { animation: none !important; }
+  }
+
+  /* Mobile-Optimierung */
+  @media (max-width: 600px) {
+    .app { padding: 10px; gap: 10px; }
+    header h1 { font-size: 19px; }
+    .variant-btn { font-size: 11px; padding: 6px 9px; min-height: 32px; }
+    .variant-btn .num { width: 16px; height: 16px; font-size: 9px; }
+    .formation-wrap { padding: 8px; border-radius: 10px; }
+    .info-panel { padding: 8px; gap: 6px; border-radius: 10px; }
+    .takt-display { padding: 6px 10px; }
+    .takt-display .value { font-size: 19px; }
+    .command-box .text { font-size: 12px; }
+    .description { font-size: 11px; min-height: 48px; padding: 7px 9px; }
+    .role-row { padding: 6px 8px; }
+    .role-row select { font-size: 11px; padding: 5px 7px; }
+    .my-action { font-size: 11px; padding: 5px 7px; }
+    .step-meter { padding: 6px 8px; }
+    .legend { gap: 2px; font-size: 10px; }
+    .legend-dot { width: 10px; height: 10px; }
+    .controls { padding: 7px 9px; gap: 6px; border-radius: 10px; }
+    .ctrl-btn { width: 36px; height: 36px; font-size: 14px; border-radius: 7px; }
+    .ctrl-btn.primary { width: 44px; height: 44px; font-size: 16px; }
+    .speed-ctrl { width: 100%; justify-content: center; padding-top: 4px; border-top: 1px solid var(--card-border); margin-top: 2px; }
+    .timeline-strip { padding: 8px 10px; }
+    .timeline-header { font-size: 9px; }
+    .timeline-header .legend-mini { display: none; }
+    .ti-block { flex: 1 0 64px; min-width: 64px; padding: 5px 4px 4px; }
+    .ti-takt-num { font-size: 9px; }
+    .ti-name { font-size: 8px; }
+    .ti-icons { height: 12px; gap: 2px; }
+    .ti-ic { font-size: 9px; padding: 0 3px; }
+    .ti-beat { width: 4px; height: 4px; }
+    .ti-beats { gap: 2px; }
+    .quiz-section { padding: 12px 14px; }
+    .quiz-section h3 { font-size: 14px; }
+    .quiz-section .sub { font-size: 11px; }
+    .quiz-q .qtext { font-size: 12px; }
+    .quiz-opt { font-size: 11px; padding: 7px 10px; min-height: 32px; }
+    footer { font-size: 10px; }
+  }
+  @media (max-width: 380px) {
+    .variant-btn { font-size: 10px; padding: 5px 7px; }
+    .ctrl-btn { width: 34px; height: 34px; }
+    .ctrl-btn.primary { width: 42px; height: 42px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header>
+    <div class="title-block">
+      <h1>Abfallen &amp; Aufmarschieren</h1>
+      <p>Animierte Erklärung der Marschformen — für alle Musikantinnen und Musikanten</p>
+    </div>
+    <nav class="variant-selector" id="variants" role="tablist" aria-label="Variante auswählen"></nav>
+  </header>
+
+  <div class="timeline-strip" aria-label="Zeitleiste mit Takten und Phasen">
+    <div class="timeline-header">
+      <span>⏱ Zeitachse · Takte &amp; Zählzeiten →</span>
+      <span class="legend-mini">
+        <span><span class="ti-ic stab" style="font-size:9px;padding:0 4px">↖</span> Stab</span>
+        <span><span class="ti-ic drum" style="font-size:9px;padding:0 4px">🥁</span> Trommel</span>
+      </span>
+    </div>
+    <div class="timeline-track" id="timelineTrack">
+      <div class="ti-cursor" id="timelineCursor" style="left:0px"></div>
+    </div>
+  </div>
+
+  <div class="stage">
+    <div class="formation-wrap" id="formationWrap">
+      <svg class="formation" id="svg" viewBox="0 0 1000 700" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Animierte Marschformation">
+        <defs>
+          <linearGradient id="streetGrad" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stop-color="#1a2542" stop-opacity="0.4"/>
+            <stop offset="100%" stop-color="#0b1020" stop-opacity="0.1"/>
+          </linearGradient>
+          <radialGradient id="batonGlow">
+            <stop offset="0%" stop-color="#ffc857" stop-opacity="0.6"/>
+            <stop offset="100%" stop-color="#ffc857" stop-opacity="0"/>
+          </radialGradient>
+          <filter id="glow"><feGaussianBlur stdDeviation="3"/></filter>
+        </defs>
+
+        <!-- Marschstraße -->
+        <rect x="80" y="0" width="840" height="700" fill="url(#streetGrad)" rx="20"/>
+        <!-- bewegende Längs-Stripes (suggerieren Vorwärtsbewegung) -->
+        <line class="lane-stripe" x1="80" y1="0" x2="80" y2="700" stroke="rgba(255,255,255,0.10)" stroke-width="2" stroke-dasharray="14 14"/>
+        <line class="lane-stripe" x1="920" y1="0" x2="920" y2="700" stroke="rgba(255,255,255,0.10)" stroke-width="2" stroke-dasharray="14 14"/>
+        <line class="lane-stripe" x1="500" y1="0" x2="500" y2="700" stroke="rgba(255,255,255,0.04)" stroke-width="1" stroke-dasharray="6 18"/>
+        <text x="60" y="350" fill="rgba(255,255,255,0.18)" font-size="11" text-anchor="middle" transform="rotate(-90 60 350)">Marschrichtung →</text>
+
+        <!-- Marschrichtungs-Pfeil oben -->
+        <g transform="translate(500 30)">
+          <path d="M -20 10 L 0 -8 L 20 10" stroke="rgba(255,255,255,0.4)" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          <text y="28" fill="rgba(255,255,255,0.5)" font-size="11" text-anchor="middle">vorwärts</text>
+        </g>
+
+        <!-- Stab-Anzeige -->
+        <g transform="translate(880 80)">
+          <rect x="-50" y="-30" width="100" height="120" rx="10" fill="rgba(0,0,0,0.3)" stroke="rgba(255,255,255,0.1)"/>
+          <text y="-12" fill="#a8b0c8" font-size="10" text-anchor="middle">STAB</text>
+          <circle cx="0" cy="80" r="6" fill="#ffc857"/>
+          <g id="batonGroup" class="baton" transform="rotate(0 0 80)">
+            <line x1="0" y1="80" x2="0" y2="15" stroke="#ffc857" stroke-width="3" stroke-linecap="round"/>
+            <circle cx="0" cy="15" r="5" fill="#ffc857" filter="url(#glow)"/>
+          </g>
+          <text id="batonStateLabel" y="115" fill="#a8b0c8" font-size="10" text-anchor="middle">Grundstellung</text>
+        </g>
+
+        <!-- Großtrommel -->
+        <g transform="translate(880 600)">
+          <rect x="-50" y="-40" width="100" height="100" rx="10" fill="rgba(0,0,0,0.3)" stroke="rgba(255,255,255,0.1)"/>
+          <text y="-22" fill="#a8b0c8" font-size="10" text-anchor="middle">TROMMEL</text>
+          <circle id="drumFlash" cx="0" cy="10" r="36" fill="#f72585" class="drum-flash" filter="url(#glow)"/>
+          <circle cx="0" cy="10" r="22" fill="#2a1a1a" stroke="#ff7a9c" stroke-width="2"/>
+          <circle cx="0" cy="10" r="22" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="6"/>
+          <text id="drumLabel" y="50" fill="#a8b0c8" font-size="10" text-anchor="middle">—</text>
+        </g>
+
+        <!-- Schockwellen / Trails Layer (unter Musikern) -->
+        <g id="annotations"></g>
+        <!-- Musiker -->
+        <g id="musicians"></g>
+      </svg>
+    </div>
+
+    <aside class="info-panel">
+      <div class="takt-display">
+        <div>
+          <div class="label">Takt</div>
+          <div class="value" id="taktValue">0</div>
+        </div>
+        <div style="text-align:right">
+          <div class="label">Phase</div>
+          <div style="font-size:14px; font-weight:600; color:var(--accent-2)" id="phaseLabel">—</div>
+        </div>
+      </div>
+
+      <div class="beat-strip" id="beatStrip" aria-hidden="true">
+        <div class="beat-dot"></div><div class="beat-dot"></div>
+        <div class="beat-dot"></div><div class="beat-dot"></div>
+      </div>
+
+      <div class="command-box">
+        <div class="title">Kommando</div>
+        <div class="text" id="commandText">Bereit zum Start</div>
+      </div>
+
+      <div class="description" id="descriptionText">
+        Drücke <strong>▶</strong> um die Animation zu starten. Du kannst zwischen drei Varianten wählen.
+      </div>
+
+      <div class="role-row">
+        <div class="label">Welche Position spielst du?</div>
+        <select id="roleFilter" aria-label="Eigene Position wählen">
+          <option value="all">Alle anzeigen</option>
+          <option value="front">Ich bin in der 1. Linie</option>
+          <option value="center">Ich bin Mitte (2.-4. Linie)</option>
+          <option value="wing">Ich bin Flügelmusiker</option>
+          <option value="stab">Ich bin Stabführer</option>
+        </select>
+        <div class="my-action hidden" id="myAction"></div>
+      </div>
+
+      <div class="step-meter">
+        <div class="step-row" id="stepNormalRow">
+          <div class="lbl">Normalschritt</div>
+          <div class="step-bar"><div class="step-fill normal"></div></div>
+        </div>
+        <div class="step-row" id="stepKurzRow">
+          <div class="lbl">kurzer Schritt</div>
+          <div class="step-bar"><div class="step-fill kurz"></div></div>
+        </div>
+      </div>
+
+      <div class="legend">
+        <div class="legend-row">
+          <div class="legend-dot" style="background:#ffc857; box-shadow:0 0 8px #ffc857;"></div>
+          <span><span class="hl-stab">Stabführer</span> (gibt Kommando)</span>
+        </div>
+        <div class="legend-row">
+          <div class="legend-dot" style="background:#ffb480;"></div>
+          <span><span class="hl-wing">Flügelmusiker</span> (rücken ein/aus)</span>
+        </div>
+        <div class="legend-row">
+          <div class="legend-dot" style="background:#7adfff;"></div>
+          <span><span class="hl-center">Mittlere Musikanten</span></span>
+        </div>
+        <div class="legend-row">
+          <div class="legend-dot" style="background:#f72585;"></div>
+          <span><span class="hl-drum">Große Trommel</span> (akustisches Zeichen)</span>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <div class="controls">
+    <button class="ctrl-btn" id="resetBtn" aria-label="Zurücksetzen" title="Zurücksetzen (R)">↻</button>
+    <button class="ctrl-btn" id="prevBtn" aria-label="Vorherige Phase" title="Vorherige Phase (←)">⏮</button>
+    <button class="ctrl-btn primary pulse" id="playBtn" aria-label="Abspielen" title="Abspielen / Pause (Leertaste)">▶</button>
+    <button class="ctrl-btn" id="nextBtn" aria-label="Nächste Phase" title="Nächste Phase (→)">⏭</button>
+    <button class="ctrl-btn toggle" id="loopBtn" aria-label="Wiederholen" aria-pressed="false" title="Endlos-Wiederholung">↺</button>
+    <button class="ctrl-btn toggle" id="soundBtn" aria-label="Klang ein/aus" aria-pressed="false" title="Klick + Trommel ein/aus">🔊</button>
+    <div class="speed-ctrl">
+      <span>Tempo</span>
+      <input type="range" id="speedRange" min="0.4" max="2" step="0.1" value="1" aria-label="Geschwindigkeit">
+      <span id="speedLabel">1.0×</span>
+    </div>
+  </div>
+
+  <div class="quiz-section" id="quizSection" hidden>
+    <h3>🎓 Kurzes Quiz — hast du es verstanden?</h3>
+    <div class="sub">3 Fragen zur gerade gesehenen Variante. Klick auf die Antwort.</div>
+    <div id="quizContent"></div>
+    <div class="quiz-score" id="quizScore"></div>
+  </div>
+
+  <div class="keyboard-hint">
+    Tastatur: <kbd>Leertaste</kbd> Play/Pause &nbsp;·&nbsp; <kbd>←</kbd> <kbd>→</kbd> Phasen &nbsp;·&nbsp; <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> Variante &nbsp;·&nbsp; <kbd>R</kbd> Reset
+  </div>
+
+  <footer>
+    Inhaltliche Grundlage: <a href="https://wiki.blasmusik.at/pages/viewpage.action?pageId=9601801" target="_blank" rel="noopener">wiki.blasmusik.at — Abfallen und Aufmarschieren</a><br>
+    Lernhilfe für Musikanten ohne Stabführer-Ausbildung. Beispiel-Marschblock 4 Linien × 5 Reihen — echte Kapellen variieren.
+  </footer>
+
+</div>
+
+<script>
+'use strict';
+
+/* ==========================================================
+   FORMATION & ANIMATION ENGINE
+   ========================================================== */
+
+const SVG_W = 1000, SVG_H = 700;
+const N_LINIE = 4;
+const N_REIHE = 5;
+const X_SPACING = 90;
+const Y_SPACING = 78;
+const X_CENTER = 500;
+const Y_FRONT = 220;
+const STAB_Y = 110;
+
+const SVG_NS = 'http://www.w3.org/2000/svg';
+
+function widePos(linie, reihe) {
+  return { x: X_CENTER + (reihe - 2) * X_SPACING, y: Y_FRONT + linie * Y_SPACING };
+}
+
+function narrowPos(linie, reihe) {
+  const innerSpacing = 70;
+  const wideY = Y_FRONT + linie * (Y_SPACING + 38);
+  if (reihe === 1 || reihe === 2 || reihe === 3) {
+    return { x: X_CENTER + (reihe - 2) * innerSpacing, y: wideY };
+  }
+  // Flügel direkt HINTER der Nachbar-Reihe
+  if (reihe === 0) return { x: X_CENTER + (1 - 2) * innerSpacing, y: wideY + 38 };
+  if (reihe === 4) return { x: X_CENTER + (3 - 2) * innerSpacing, y: wideY + 38 };
+  return { x: X_CENTER, y: wideY }; // Fallback
+}
+
+function buildMusicians() {
+  const list = [];
+  list.push({ id: 'stab', role: 'stab', x: X_CENTER, y: STAB_Y, linie: -1, reihe: -1 });
+  for (let l = 0; l < N_LINIE; l++) {
+    for (let r = 0; r < N_REIHE; r++) {
+      const isWing = (r === 0 || r === N_REIHE - 1);
+      const p = widePos(l, r);
+      list.push({
+        id: `m_${l}_${r}`,
+        role: isWing ? 'wing' : 'center',
+        linie: l, reihe: r,
+        x: p.x, y: p.y
+      });
+    }
+  }
+  return list;
+}
+
+let musicians = buildMusicians();
+
+const F = {
+  wide: (m) => m.role === 'stab' ? {x: X_CENTER, y: STAB_Y} : widePos(m.linie, m.reihe),
+  narrow: (m) => m.role === 'stab' ? {x: X_CENTER, y: STAB_Y} : narrowPos(m.linie, m.reihe),
+  // Reißverschluss-Einrücken: Linien 0..untilLinie sind eingerückt, Rest noch außen (gestreckt)
+  narrowProgressiv: (untilLinie) => (m) => {
+    if (m.role === 'stab') return {x: X_CENTER, y: STAB_Y};
+    if (m.linie <= untilLinie) return narrowPos(m.linie, m.reihe);
+    return { x: widePos(m.linie, m.reihe).x, y: Y_FRONT + m.linie * (Y_SPACING + 38) };
+  },
+  // Reißverschluss-Ausrücken: Linien 0..untilLinie sind schon nach außen, Rest noch eingerückt
+  wideProgressiv: (untilLinie) => (m) => {
+    if (m.role === 'stab') return {x: X_CENTER, y: STAB_Y};
+    if (m.linie <= untilLinie) {
+      // schon ausgerückt, aber Tiefenabstand noch groß
+      return { x: widePos(m.linie, m.reihe).x, y: Y_FRONT + m.linie * (Y_SPACING + 38) };
+    }
+    return narrowPos(m.linie, m.reihe);
+  },
+  // Tiefenabstand wieder hergestellt: Position wie wide, alle in Original-Tiefenabstand
+  stretched: (m) => {
+    if (m.role === 'stab') return {x: X_CENTER, y: STAB_Y};
+    return { x: widePos(m.linie, m.reihe).x, y: Y_FRONT + m.linie * (Y_SPACING + 38) };
+  }
+};
+
+const K = {
+  none: () => false,
+  // V1 Abfallen: außer drei mittlere Reihen der 1. Linie alle im kurzen Schritt
+  // Wiki: "außer den drei mittleren Reihen der 1. Linie alle im kurzen Schritt"
+  exceptMidFront: (m) => {
+    if (m.role === 'stab') return false;
+    if (m.linie === 0 && (m.reihe === 1 || m.reihe === 2 || m.reihe === 3)) return false;
+    return true;
+  },
+  // V2/V3 Abfallen: außer Stabführer und 1. Linie alle im kurzen Schritt
+  // Wiki: "außer dem Stabführer ... und der 1. Linie alle im kurzen Schritt"
+  exceptFrontLine: (m) => {
+    if (m.role === 'stab') return false;
+    if (m.linie === 0) return false;
+    return true;
+  },
+  // Aufmarschieren — Phase A: "Stabführer + 2., 3. und 4. Reihen kurzer Schritt"
+  // Wiki: "Stabführer (mit Marketenderinnen), die 2., 3. und 4. Reihen marschieren im kurzen Schritt"
+  // Reihen = Längs-Spalten 2,3,4 (= drei mittlere Spalten der 5er Formation)
+  // Stabführer ist auch dabei. Flügel (Reihen 1,5) rücken in def. Schritten.
+  // → Diese Funktion gibt true für: Stabführer + alle in mittleren Spalten (Reihe 1,2,3 in 0-Indexierung)
+  stabAndMiddleCols: (m) => {
+    if (m.role === 'stab') return true;
+    if (m.role === 'wing') return false; // Flügel rücken aus, nicht im kurzen Schritt
+    return true; // alle Mitte-Musikanten = Reihen 1,2,3 (0-indexed)
+  },
+  // Aufmarschieren — Phase B: "alle außer Stabführer und 1. Linie im Normalschritt"
+  // → Stabführer + 1. Linie weiter kurzer Schritt, der Rest Normalschritt
+  // Wiki: "Dann marschieren alle, außer dem Stabführer und der 1. Linie, im Normalschritt"
+  stabAndFrontOnly: (m) => {
+    if (m.role === 'stab') return true;
+    if (m.linie === 0) return true;
+    return false;
+  }
+};
+
+/* ==========================================================
+   ROLLEN-AKTIONS-LOOKUP (was muss ICH tun?)
+   ========================================================== */
+function actionForRole(role, phase) {
+  // role: 'front' (1. Linie), 'center' (2.-4. Linie Mitte), 'wing' (Flügel), 'stab'
+  const k = phase.kurz;
+  const phaseLower = phase.name.toLowerCase();
+  const einrueckPhase = phaseLower.includes('reißverschluss') || phaseLower.includes('linie ein') || phaseLower.includes('flügel ein');
+  const ausrueckPhase = phaseLower.includes('reißverschluss') && phaseLower.includes('aus') ||
+                        phaseLower.includes('flügel rücken aus') || phaseLower.includes('flügel aus');
+
+  if (role === 'stab') {
+    if (phase.baton === 'links') return '🪄 Du hältst den Stab über der Kopfmitte schräg nach links.';
+    if (phase.baton === 'grundstellung' && phase.command.toLowerCase().includes('vorbereitung') === false && phase.name.toLowerCase().includes('vorbereitung') === false) {
+      if (k === K.stabAndMiddleCols) return '🪄 Stab in Grundstellung. Du gehst im kurzen Schritt.';
+      if (k === K.stabAndFrontOnly) return '🪄 Stab in Grundstellung. Du gehst weiter im kurzen Schritt, bis Tiefenabstand wieder normal.';
+      return '🪄 Stab in Grundstellung. Du marschierst im Normalschritt.';
+    }
+    return '🪄 Du stehst in Grundstellung und marschierst im Normalschritt.';
+  }
+
+  if (role === 'front') { // 1. Linie
+    if (k === K.exceptMidFront) return '🚶 Bist du Flügelmusiker (Reihe 1 oder 5) der 1. Linie? → kurzer Schritt. Sonst (Reihen 2, 3, 4): Normalschritt!';
+    if (k === K.exceptFrontLine) return '✅ Die 1. Linie bleibt im Normalschritt.';
+    if (k === K.stabAndMiddleCols) return '🚶 Mitte der 1. Linie (Reihen 2,3,4) → kurzer Schritt. Flügel der 1. Linie rücken aus.';
+    if (k === K.stabAndFrontOnly) return '⏸️ Du bleibst im kurzen Schritt, bis der Tiefenabstand wieder original ist.';
+    return '✅ Du marschierst im Normalschritt.';
+  }
+
+  if (role === 'center') {
+    if (k === K.exceptMidFront || k === K.exceptFrontLine || k === K.stabAndMiddleCols) {
+      return '⏸️ Du gehst im kurzen Schritt — kleine Schritte, gleicher Takt.';
+    }
+    if (k === K.stabAndFrontOnly) return '✅ Du marschierst im Normalschritt — Tiefenabstand wieder herstellen.';
+    return '✅ Du marschierst im Normalschritt.';
+  }
+
+  if (role === 'wing') {
+    if (einrueckPhase && !ausrueckPhase) {
+      return '➡️ Du rückst in definierten Schritten (4, 6 oder 8) nach innen, direkt hinter deinen Nachbarn.';
+    }
+    if (ausrueckPhase) {
+      return '⬅️ Du rückst in definierten Schritten (4, 6 oder 8) wieder nach außen.';
+    }
+    if (k === K.exceptMidFront || k === K.exceptFrontLine) return '⏸️ Du gehst im kurzen Schritt.';
+    if (k === K.stabAndMiddleCols) return '⬅️ Du marschierst in definierten Schritten nach außen.';
+    if (k === K.stabAndFrontOnly) return '✅ Du marschierst im Normalschritt.';
+    return '✅ Du marschierst im Normalschritt.';
+  }
+  return '';
+}
+
+/* ==========================================================
+   GLOSSAR
+   ========================================================== */
+const GLOSSAR = {
+  'Stabführer': 'Die Person, die mit dem Marschstab vor der Kapelle marschiert und alle Kommandos gibt.',
+  'Stab': 'Der Marschstab des Stabführers — über seine Position werden alle Befehle visuell signalisiert.',
+  'Linie': 'Eine Reihe quer zur Marschrichtung. 1. Linie = vorderste, 4. Linie = hinterste.',
+  '1. Linie': 'Die vorderste Querreihe direkt hinter dem Stabführer.',
+  '2., 3. und 4. Reihen': 'Die mittleren drei Längs-Spalten (Reihen 2, 3 und 4 von 5). Sie bleiben in der schmalen Formation und marschieren beim Aufmarschieren im kurzen Schritt.',
+  'Reihen': 'Längs-Spalten der Formation. Bei 5 Reihen sind Reihe 1 und 5 die Außen- (Flügel-) reihen.',
+  'Reihe': 'Eine Längs-Spalte der Formation, von vorne nach hinten gesehen.',
+  'Flügelmusiker': 'Die Musikanten in den äußersten Längs-Reihen — die rücken beim Abfallen nach innen, beim Aufmarschieren wieder nach außen.',
+  'Tiefenabstand': 'Der Abstand zwischen den Linien in Marschrichtung — beim Abfallen ca. 2 m.',
+  'Grundstellung': 'Senkrechte Position des Stabes vor dem Körper — Standard-Stellung des Stabführers.',
+  'kurzen Schritt': 'Kleine Schritte im selben Takt — die Formation rückt langsamer vor, der Tiefenabstand wächst.',
+  'kurzem Schritt': 'Kleine Schritte im selben Takt — die Formation rückt langsamer vor, der Tiefenabstand wächst.',
+  'kurzer Schritt': 'Kleine Schritte im selben Takt — die Formation rückt langsamer vor, der Tiefenabstand wächst.',
+  'Normalschritt': 'Normale Schrittlänge — die übliche Marschgeschwindigkeit.',
+  'Große Trommel': 'Die große Pauke der Kapelle — gibt das akustische Zeichen für Normalschritt; in Variante 3 zusätzlich für Abfall/Aufmarsch.',
+  'Reißverschluss': 'Methode, bei der die Flügelmusiker Linie für Linie nacheinander einrücken — beginnend mit der 1. Linie.',
+  'Außenreihen': 'Die Längs-Reihen außen in der Formation — sie bleiben in der schmalen Formation voll besetzt.',
+  'definierten Schritten': 'Eine festgelegte Schrittzahl (4, 6 oder 8), in der die Flügelmusiker nach innen oder außen marschieren.',
+  'Aviso': 'Verbales/akustisches Vorzeichen vor einem Kommando — beim Abfallen erfolgt KEIN Aviso.',
+  'Kapelle': 'Die gesamte Musikformation in Bewegung.'
+};
+
+function applyGlossarTooltips(html) {
+  // Wickelt Schlüsselbegriffe in <span class="gloss"> — vermeidet Doppel-Wrap durch Marker
+  let out = html;
+  // Sortiere nach Länge (längste zuerst), damit "1. Linie" vor "Linie" matcht
+  const keys = Object.keys(GLOSSAR).sort((a,b) => b.length - a.length);
+  // Marker-Phase: ersetzt alle Vorkommen durch Platzhalter
+  const placeholders = [];
+  keys.forEach((key) => {
+    const def = GLOSSAR[key].replace(/"/g, '&quot;');
+    // Word-boundary, case-sensitive (Begriffe sind groß/klein wichtig)
+    const escaped = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const re = new RegExp('(?<![\\w<>"=])' + escaped + '(?!\\w)', 'g');
+    out = out.replace(re, () => {
+      const idx = placeholders.length;
+      placeholders.push('<span class="gloss" data-def="' + def + '" tabindex="0">' + key + '</span>');
+      return 'GL' + idx + 'GL';
+    });
+  });
+  out = out.replace(/GL(\d+)GL/g, (_, i) => placeholders[+i]);
+  return out;
+}
+
+/* ==========================================================
+   SZENARIEN: Pro Variante eine Liste von Phasen
+   ========================================================== */
+
+const VARIANT_1 = {
+  name: 'Variante 1: Reißverschluss',
+  short: 'Reißverschluss',
+  subtitle: 'Flügelmusiker rücken Linie für Linie nacheinander ein und aus — wie ein Reißverschluss. Kein Aviso, keine akustischen Signale (außer am Ende).',
+  whenUsed: 'Geeignet, wenn die Kapelle die Reißverschluss-Reihenfolge gut beherrscht.',
+  phases: [
+    // ── ABFALLEN ──
+    { name: 'Vorbereitung — Grundstellung', takt: 0, duration: 1, baton: 'grundstellung', drum: 'still',
+      command: 'Stabführer in Grundstellung (1 Takt)',
+      description: 'Der Stabführer steht <strong>1 Takt</strong> lang in der Grundstellung. Damit gibt er aus dieser Position das Zeichen zum Abfallen. <strong>Kein Aviso</strong> (kein verbales/akustisches Signal).',
+      kurz: K.none, formation: F.wide },
+    { name: 'Ankündigung — Stab nach links', takt: 1, duration: 4, baton: 'links', drum: 'still',
+      command: '"Stab 4 Takte über Kopfmitte nach links"',
+      description: 'Der Stab geht <strong>4 Takte</strong> über der Kopfmitte nach links — die <strong>Ankündigung</strong>. Alle Musikanten wissen: Abfallen kommt.',
+      kurz: K.none, formation: F.wide },
+    { name: '5. Takt: Stab Grundstellung', takt: 5, duration: 1, baton: 'grundstellung', drum: 'still',
+      command: 'Ausführung — Stab in Grundstellung',
+      description: 'Im <strong>5. Takt</strong> kommt der Stab zurück in die Grundstellung. Daraufhin marschieren <strong>außer den drei mittleren Reihen der 1. Linie alle im kurzen Schritt</strong> und stellen nach und nach den nötigen Tiefenabstand her.',
+      kurz: K.exceptMidFront, formation: F.stretched },
+    { name: 'Reißverschluss — 1. Linie', takt: 6, duration: 1, baton: 'grundstellung', drum: 'still',
+      command: 'Flügel rücken ein — beginnend mit 1. Linie',
+      description: '<em>(Beispiel-Timing — Wiki sagt nur „in den folgenden Takten".)</em><br>Die <span class="hl-wing">Flügelmusiker der 1. Linie</span> rücken zuerst nach innen — direkt hinter ihre Nachbarn.',
+      kurz: K.exceptMidFront, formation: F.narrowProgressiv(0) },
+    { name: 'Reißverschluss — 2. Linie', takt: 7, duration: 1, baton: 'grundstellung', drum: 'still',
+      command: 'Reißverschluss läuft weiter',
+      description: 'Nun folgen die <span class="hl-wing">Flügelmusiker der 2. Linie</span>.',
+      kurz: K.exceptMidFront, formation: F.narrowProgressiv(1) },
+    { name: 'Reißverschluss — 3. Linie', takt: 8, duration: 1, baton: 'grundstellung', drum: 'still',
+      command: 'Reißverschluss läuft weiter',
+      description: 'Die <span class="hl-wing">Flügelmusiker der 3. Linie</span> rücken nach innen.',
+      kurz: K.exceptMidFront, formation: F.narrowProgressiv(2) },
+    { name: 'Abgefallene Marschformation', takt: 9, duration: 4, baton: 'grundstellung', drum: 'still',
+      command: 'Abgefallene Marschformation erreicht',
+      description: 'Auch die letzten <span class="hl-wing">Flügelmusiker</span> (4. Linie) sind eingerückt. <strong>Die Außenreihen bleiben voll besetzt</strong> — die Kapelle marschiert nun durch die enge Stelle.',
+      kurz: K.none, formation: F.narrow },
+
+    // ── AUFMARSCHIEREN ──
+    { name: 'Vorbereitung — Grundstellung', takt: 13, duration: 1, baton: 'grundstellung', drum: 'still',
+      command: 'Stabführer in Grundstellung (1 Takt)',
+      description: 'Die enge Stelle ist passiert. Der Stabführer steht <strong>1 Takt</strong> in der Grundstellung — daraus gibt er nun das Zeichen zum Aufmarschieren.',
+      kurz: K.none, formation: F.narrow },
+    { name: 'Ankündigung — Stab nach links', takt: 14, duration: 4, baton: 'links', drum: 'still',
+      command: '"Stab 4 Takte über Kopfmitte nach links"',
+      description: 'Der Stab geht <strong>4 Takte</strong> über der Kopfmitte nach links — die Ankündigung des Aufmarschierens.',
+      kurz: K.none, formation: F.narrow },
+    { name: '5. Takt: Stab Grund. — Reißverschluss zurück', takt: 18, duration: 1, baton: 'grundstellung', drum: 'still',
+      command: 'Stabführer + Reihen 2,3,4 → kurzer Schritt; Flügel rücken aus',
+      description: 'Im <strong>5. Takt</strong> kommt der Stab in Grundstellung. Stabführer sowie die <strong>2., 3. und 4. Reihen</strong> (mittlere Längs-Spalten) marschieren im <strong>kurzen Schritt</strong>. Die <span class="hl-wing">Flügelmusiker der 1. Linie</span> rücken in <strong>definierten Schritten (4, 6 oder 8)</strong> wieder nach außen — <strong>beginnend mit der 1. Linie</strong>.',
+      kurz: K.stabAndMiddleCols, formation: F.wideProgressiv(0) },
+    { name: 'Reißverschluss — 2. Linie aus', takt: 19, duration: 1, baton: 'grundstellung', drum: 'still',
+      command: 'Flügel der 2. Linie rücken aus',
+      description: 'Die <span class="hl-wing">Flügelmusiker der 2. Linie</span> rücken nach außen.',
+      kurz: K.stabAndMiddleCols, formation: F.wideProgressiv(1) },
+    { name: 'Reißverschluss — 3. Linie aus', takt: 20, duration: 1, baton: 'grundstellung', drum: 'still',
+      command: 'Flügel der 3. Linie rücken aus',
+      description: 'Die <span class="hl-wing">Flügelmusiker der 3. Linie</span> rücken nach außen.',
+      kurz: K.stabAndMiddleCols, formation: F.wideProgressiv(2) },
+    { name: 'Tiefenabstand wiederherstellen', takt: 21, duration: 4, baton: 'grundstellung', drum: 'still',
+      command: 'Alle außer Stabführer + 1. Linie → Normalschritt',
+      description: 'Auch die letzte Linie ist ausgerückt. Nun marschieren <strong>alle, außer dem Stabführer und der 1. Linie, im Normalschritt</strong>, bis der ursprüngliche Tiefenabstand erreicht ist. Stabführer und 1. Linie bleiben vorerst im kurzen Schritt.',
+      kurz: K.stabAndFrontOnly, formation: F.wide },
+    { name: '🥁 Trommel → Normalschritt', takt: 25, duration: 1, baton: 'grundstellung', drum: 'normalschritt',
+      command: 'Akustisches Zeichen der Großen Trommel',
+      description: 'Daraufhin gibt die <span class="hl-drum">Große Trommel</span> das akustische Zeichen für den <strong>Normalschritt</strong>, der im nächsten Takt von der gesamten Formation aufgenommen wird. Originalformation wiederhergestellt.',
+      kurz: K.none, formation: F.wide }
+  ]
+};
+
+const VARIANT_2 = {
+  name: 'Variante 2: Gleichzeitig — ohne akustisches Zeichen',
+  short: 'Gleichzeitig (still)',
+  subtitle: 'Alle Flügelmusiker rücken gleichzeitig ein, sobald der Stab in Grundstellung kommt. Kein Aviso.',
+  whenUsed: 'Erfahrene Kapellen mit guter Sicht auf den Stab — kompakter und leiser Ablauf.',
+  phases: [
+    // ── ABFALLEN ──
+    { name: 'Vorbereitung — Grundstellung', takt: 0, duration: 1, baton: 'grundstellung', drum: 'still',
+      command: 'Stabführer in Grundstellung (1 Takt)',
+      description: 'Der Stabführer steht <strong>1 Takt</strong> in der Grundstellung. <strong>Kein Aviso</strong>.',
+      kurz: K.none, formation: F.wide },
+    { name: 'Ankündigung — 4 bis 8 Takte links', takt: 1, duration: 6, baton: 'links', drum: 'still',
+      command: '"Stab 4 – 8 Takte über Kopfmitte nach links"',
+      description: 'Der Stab geht <strong>4 – 8 Takte</strong> (je nach Größe der Kapelle) über der Kopfmitte nach links. In dieser Zeit marschieren <strong>außer dem Stabführer und der 1. Linie alle im kurzen Schritt</strong>, bis sich der Tiefenabstand zur vorderen Linie auf <strong>ca. 2 m</strong> vergrößert hat.',
+      kurz: K.exceptFrontLine, formation: F.stretched },
+    { name: 'Stab Grundstellung — alle Flügel ein', takt: 7, duration: 1, baton: 'grundstellung', drum: 'still',
+      command: 'Anschließend: Flügelmusiker gleichzeitig einrücken',
+      description: 'Anschließend gibt man den Stab in <strong>Grundstellung</strong>. Dabei rücken die <span class="hl-wing">Flügelmusiker gleichzeitig</span> in <strong>definierten Schritten (4, 6 oder 8)</strong> in die inneren Reihen.',
+      kurz: K.none, formation: F.narrow },
+    { name: 'Abgefallene Marschformation', takt: 8, duration: 4, baton: 'grundstellung', drum: 'still',
+      command: 'Abgefallene Marschformation erreicht',
+      description: 'Die Kapelle marschiert durch die enge Stelle. <strong>Außenreihen bleiben voll besetzt.</strong>',
+      kurz: K.none, formation: F.narrow },
+
+    // ── AUFMARSCHIEREN ──
+    { name: 'Vorbereitung — Grundstellung', takt: 12, duration: 1, baton: 'grundstellung', drum: 'still',
+      command: 'Stabführer in Grundstellung (1 Takt)',
+      description: 'Der Stabführer steht <strong>1 Takt</strong> in der Grundstellung — bereit, das Zeichen zum Aufmarschieren zu geben.',
+      kurz: K.none, formation: F.narrow },
+    { name: 'Ankündigung — Stab 4 Takte links', takt: 13, duration: 4, baton: 'links', drum: 'still',
+      command: '"Stab 4 Takte über Kopfmitte nach links"',
+      description: 'Der Stab geht <strong>4 Takte</strong> über der Kopfmitte nach links — die Ankündigung.',
+      kurz: K.none, formation: F.narrow },
+    { name: '5. Takt: Stab Grund. — Flügel aus', takt: 17, duration: 1, baton: 'grundstellung', drum: 'still',
+      command: 'Stabführer + Reihen 2,3,4 → kurzer Schritt; Flügel rücken aus',
+      description: 'Im <strong>5. Takt</strong> kommt der Stab in Grundstellung. Stabführer und die <strong>2., 3. und 4. Reihen</strong> marschieren im <strong>kurzen Schritt</strong>. Die <span class="hl-wing">Flügelmusiker</span> rücken in <strong>definierten Schritten (4, 6 oder 8)</strong> wieder in die äußeren Reihen.',
+      kurz: K.stabAndMiddleCols, formation: F.stretched },
+    { name: 'Tiefenabstand wiederherstellen', takt: 18, duration: 4, baton: 'grundstellung', drum: 'still',
+      command: 'Alle außer Stabführer + 1. Linie → Normalschritt',
+      description: 'Dann marschieren <strong>alle, außer dem Stabführer und der 1. Linie, im Normalschritt</strong>, bis der ursprüngliche Tiefenabstand erreicht ist.',
+      kurz: K.stabAndFrontOnly, formation: F.wide },
+    { name: '🥁 Trommel → Normalschritt', takt: 22, duration: 1, baton: 'grundstellung', drum: 'normalschritt',
+      command: 'Akustisches Zeichen der Großen Trommel',
+      description: 'Daraufhin gibt die <span class="hl-drum">Große Trommel</span> das akustische Zeichen für den <strong>Normalschritt</strong>, der im nächsten Takt von der gesamten Formation aufgenommen wird.',
+      kurz: K.none, formation: F.wide }
+  ]
+};
+
+const VARIANT_3 = {
+  name: 'Variante 3: Gleichzeitig — mit akustischem Zeichen',
+  short: 'Mit Trommel',
+  subtitle: 'Die Große Trommel gibt zusätzlich akustische Signale — auch ohne Sicht auf den Stab klar.',
+  whenUsed: 'Laute Umgebung, große Kapelle oder wenn die Sicht auf den Stabführer unsicher ist.',
+  phases: [
+    // ── ABFALLEN ──
+    { name: 'Vorbereitung — Grundstellung', takt: 0, duration: 1, baton: 'grundstellung', drum: 'still',
+      command: 'Stabführer in Grundstellung (1 Takt)',
+      description: 'Der Stabführer steht <strong>1 Takt</strong> in der Grundstellung. Aus dieser Position gibt er das Zeichen.',
+      kurz: K.none, formation: F.wide },
+    { name: 'Ankündigung — Stab 3 Takte links', takt: 1, duration: 2, baton: 'links', drum: 'still',
+      command: '"Stab 3 Takte über Kopfmitte nach links" (1.-2. Takt)',
+      description: 'Der Stab geht <strong>3 Takte</strong> über der Kopfmitte nach links — die ersten 2 Takte sind reine Ankündigung.',
+      kurz: K.none, formation: F.wide },
+    { name: '🥁 3. Takt: Trommel-Signal', takt: 3, duration: 1, baton: 'links', drum: 'signal',
+      command: 'Im 3. Takt: akustisches Zeichen der Großen Trommel',
+      description: 'Im <strong>3. Takt</strong> gibt die <span class="hl-drum">Große Trommel</span> das akustische Zeichen. Vorbereitung für den nächsten Takt.',
+      kurz: K.none, formation: F.wide },
+    { name: '4. Takt: Stab Grund. + kurzer Schritt', takt: 4, duration: 3, baton: 'grundstellung', drum: 'still',
+      command: 'Stab in Grundstellung. Außer Stabführer + 1. Linie → kurzer Schritt',
+      description: 'Im <strong>4. Takt</strong> kommt der Stab in die <strong>Grundstellung</strong>. Im darauffolgenden Takt marschieren <strong>außer dem Stabführer und der 1. Linie alle im kurzen Schritt</strong>, bis sich der Tiefenabstand zur vorderen Linie auf <strong>ca. 2 m</strong> vergrößert hat.',
+      kurz: K.exceptFrontLine, formation: F.stretched },
+    { name: '🥁 Trommel — Zeichen zum Abfallen', takt: 7, duration: 1, baton: 'grundstellung', drum: 'signal',
+      command: 'Tiefenabstand erreicht — Trommel signalisiert Abfall',
+      description: 'Ist der nötige Tiefenabstand hergestellt, gibt die <span class="hl-drum">Große Trommel selbstständig</span> das akustische Zeichen zum Abfallen. Im darauffolgenden Takt rücken die <span class="hl-wing">Flügelmusiker</span> in <strong>definierten Schritten (4, 6 oder 8)</strong> in die inneren Reihen.',
+      kurz: K.none, formation: F.narrow },
+    { name: 'Abgefallene Marschformation', takt: 8, duration: 4, baton: 'grundstellung', drum: 'still',
+      command: 'Abgefallene Marschformation erreicht',
+      description: 'Die Kapelle marschiert durch die enge Stelle. <strong>Außenreihen bleiben voll besetzt.</strong>',
+      kurz: K.none, formation: F.narrow },
+
+    // ── AUFMARSCHIEREN ──
+    { name: 'Vorbereitung — Grundstellung', takt: 12, duration: 1, baton: 'grundstellung', drum: 'still',
+      command: 'Stabführer in Grundstellung (1 Takt)',
+      description: 'Der Stabführer steht <strong>1 Takt</strong> in der Grundstellung — er gibt das Zeichen zum Aufmarschieren.',
+      kurz: K.none, formation: F.narrow },
+    { name: 'Ankündigung — Stab 3 Takte links', takt: 13, duration: 2, baton: 'links', drum: 'still',
+      command: '"Stab 3 Takte über Kopfmitte nach links"',
+      description: 'Der Stab geht <strong>3 Takte</strong> über der Kopfmitte nach links.',
+      kurz: K.none, formation: F.narrow },
+    { name: '🥁 3. Takt: Trommel-Signal', takt: 15, duration: 1, baton: 'links', drum: 'signal',
+      command: 'Im 3. Takt: akustisches Zeichen',
+      description: 'Im <strong>3. Takt</strong> gibt die <span class="hl-drum">Große Trommel</span> das akustische Zeichen.',
+      kurz: K.none, formation: F.narrow },
+    { name: '4. Takt: Stab Grund. + Flügel aus', takt: 16, duration: 2, baton: 'grundstellung', drum: 'still',
+      command: 'Stab Grundstellung. Stab + Reihen 2,3,4 kurzer Schritt; Flügel ab 4. Takt aus',
+      description: 'Im <strong>4. Takt</strong> kommt der Stab in <strong>Grundstellung</strong>. Stabführer sowie die <strong>2., 3. und 4. Reihen</strong> marschieren im <strong>kurzen Schritt</strong>. Die <span class="hl-wing">Flügelmusiker</span> marschieren <strong>ab dem 4. Takt</strong> in <strong>definierten Schritten (4, 6 oder 8)</strong> in die äußeren Reihen.',
+      kurz: K.stabAndMiddleCols, formation: F.stretched },
+    { name: 'Tiefenabstand wiederherstellen', takt: 18, duration: 4, baton: 'grundstellung', drum: 'still',
+      command: 'Alle außer Stabführer + 1. Linie → Normalschritt',
+      description: 'Dann marschieren <strong>alle, außer dem Stabführer und der 1. Linie, im Normalschritt</strong>, bis der ursprüngliche Tiefenabstand erreicht ist.',
+      kurz: K.stabAndFrontOnly, formation: F.wide },
+    { name: '🥁 Trommel → Normalschritt', takt: 22, duration: 1, baton: 'grundstellung', drum: 'normalschritt',
+      command: 'Akustisches Zeichen der Großen Trommel',
+      description: 'Daraufhin gibt die <span class="hl-drum">Große Trommel</span> das akustische Zeichen für den <strong>Normalschritt</strong>, der im nächsten Takt von der gesamten Formation aufgenommen wird.',
+      kurz: K.none, formation: F.wide }
+  ]
+};
+
+const VARIANTS = [VARIANT_1, VARIANT_2, VARIANT_3];
+
+/* ==========================================================
+   QUIZ
+   ========================================================== */
+const QUIZZES = [
+  // Quiz V1 — Reißverschluss
+  [
+    { q: 'Wie kündigt der Stabführer in Variante 1 das Abfallen an?',
+      opts: ['Stab senkrecht nach oben', 'Stab 4 Takte über der Kopfmitte nach links', 'Mit einem Wirbel der Großen Trommel'],
+      correct: 1, fb: 'Richtig: 4 Takte über der Kopfmitte nach links. Bei diesem Zeichen erfolgt KEIN Aviso.' },
+    { q: 'Wer marschiert beim Abfallen-Beginn (5. Takt) NICHT im kurzen Schritt?',
+      opts: ['Die ganze 1. Linie', 'Die Flügelmusiker', 'Die drei mittleren Reihen der 1. Linie (und der Stabführer)'],
+      correct: 2, fb: 'Genau: nur die drei mittleren Reihen der 1. Linie und der Stabführer behalten den Normalschritt.' },
+    { q: 'Wie rücken die Flügelmusiker in Variante 1 ein?',
+      opts: ['Alle gleichzeitig', 'Linie für Linie nacheinander, beginnend mit der 1. Linie', 'Erst nach einem Trommelsignal'],
+      correct: 1, fb: 'Korrekt — das ist das Reißverschluss-Prinzip. Auch beim Aufmarschieren wird der Reißverschluss in V1 angewendet.' }
+  ],
+  // Quiz V2 — Gleichzeitig still
+  [
+    { q: 'Wie lange darf in Variante 2 die Stab-Ankündigung dauern?',
+      opts: ['Genau 4 Takte', '4 – 8 Takte (je nach Größe der Kapelle)', '3 Takte plus Trommelsignal'],
+      correct: 1, fb: 'Richtig: 4 – 8 Takte. Der Stabführer wartet, bis ca. 2 m Tiefenabstand erreicht sind.' },
+    { q: 'Wann rücken die Flügelmusiker in Variante 2 ein?',
+      opts: ['Sobald der Stab in Grundstellung kommt — alle gleichzeitig', 'Linie für Linie wie in V1', 'Erst auf ein Trommelsignal'],
+      correct: 0, fb: 'Genau: alle Flügelmusiker rücken gleichzeitig in definierten Schritten (4, 6 oder 8) ein.' },
+    { q: 'Wer geht in Variante 2 NICHT im kurzen Schritt während der Ankündigung?',
+      opts: ['Der Stabführer und die 1. Linie', 'Nur die Flügelmusiker', 'Nur die Große Trommel'],
+      correct: 0, fb: 'Korrekt: Stabführer und 1. Linie behalten den Normalschritt.' }
+  ],
+  // Quiz V3 — mit akustischem Zeichen
+  [
+    { q: 'Wann gibt die Große Trommel das erste akustische Zeichen in Variante 3?',
+      opts: ['Im 1. Takt', 'Im 3. Takt', 'Im 5. Takt'],
+      correct: 1, fb: 'Richtig: im 3. Takt der Ankündigung.' },
+    { q: 'Wann kommt der Stab in Variante 3 in die Grundstellung?',
+      opts: ['Im 4. Takt', 'Im 5. Takt', 'Erst nach dem Trommelsignal zum Einrücken'],
+      correct: 0, fb: 'Korrekt: im 4. Takt — gleichzeitig mit Beginn des kurzen Schritts (außer Stabführer + 1. Linie).' },
+    { q: 'Wodurch wird das Einrücken der Flügelmusiker in V3 ausgelöst?',
+      opts: ['Sobald der Tiefenabstand erreicht ist, gibt die Große Trommel selbstständig ein Zeichen', 'Es rücken alle gleichzeitig wie in V2', 'Wie bei V1 — Linie für Linie ohne Signal'],
+      correct: 0, fb: 'Korrekt: die Große Trommel signalisiert eigenständig, sobald 2 m Tiefenabstand erreicht sind.' }
+  ]
+];
+
+/* ==========================================================
+   STATE
+   ========================================================== */
+const state = {
+  variantIdx: 0,
+  phaseIdx: 0,
+  phaseElapsed: 0,
+  playing: false,
+  speed: 1,
+  beatInterval: 700,
+  beatsPerPhase: 4,
+  lastTimestamp: 0,
+  rafId: null,
+  drumTimeout: null,
+  loop: false,
+  sound: false,
+  audioCtx: null,
+  role: 'all',
+  lastBeatIndex: -1,
+  prevPositions: new Map()
+};
+
+function currentVariant() { return VARIANTS[state.variantIdx]; }
+function currentPhase() { return currentVariant().phases[state.phaseIdx]; }
+function phaseDurationMs(phase) {
+  const p = phase || currentPhase();
+  const takte = p.duration || 1;  // wie viele echte Takte überspannt diese Phase
+  return state.beatInterval * state.beatsPerPhase * takte / state.speed;
+}
+function totalTakte() {
+  return currentVariant().phases.reduce((s, p) => s + (p.duration || 1), 0);
+}
+// Globaler Takt-Index am Anfang der Phase
+function phaseStartTakt(idx) {
+  const phases = currentVariant().phases;
+  let s = 0;
+  for (let i = 0; i < idx; i++) s += (phases[i].duration || 1);
+  return s;
+}
+
+const svg = document.getElementById('svg');
+const musiciansG = document.getElementById('musicians');
+const annotationsG = document.getElementById('annotations');
+
+/* ==========================================================
+   RENDER
+   ========================================================== */
+function renderMusicians() {
+  musiciansG.innerHTML = '';
+  for (const m of musicians) {
+    const g = document.createElementNS(SVG_NS, 'g');
+    g.setAttribute('class', 'musician');
+    g.setAttribute('id', 'g_' + m.id);
+    g.setAttribute('transform', `translate(${m.x} ${m.y})`);
+    g.dataset.role = m.role;
+    g.dataset.linie = m.linie;
+    g.dataset.reihe = m.reihe;
+
+    // Spotlight ring (für "Ich bin..."-Modus)
+    const ringSpot = document.createElementNS(SVG_NS, 'circle');
+    ringSpot.setAttribute('class', 'ring-spot');
+    ringSpot.setAttribute('r', '24');
+    ringSpot.setAttribute('fill', 'none');
+    ringSpot.setAttribute('stroke', '#ffc857');
+    ringSpot.setAttribute('stroke-width', '2');
+    ringSpot.setAttribute('stroke-dasharray', '4 3');
+    g.appendChild(ringSpot);
+
+    const pulseG = document.createElementNS(SVG_NS, 'g');
+    pulseG.setAttribute('class', 'pulse');
+
+    if (m.role === 'stab') {
+      // Großer, drehbarer Stab über dem Stabführer (Hand bei -10 y-relativ)
+      const batonInline = document.createElementNS(SVG_NS, 'g');
+      batonInline.setAttribute('id', 'formationBaton');
+      batonInline.setAttribute('class', 'baton');
+      batonInline.setAttribute('transform', 'rotate(0 0 -10)');
+      const stick = document.createElementNS(SVG_NS, 'line');
+      stick.setAttribute('x1', '0'); stick.setAttribute('y1', '-10');
+      stick.setAttribute('x2', '0'); stick.setAttribute('y2', '-70');
+      stick.setAttribute('stroke', '#ffc857');
+      stick.setAttribute('stroke-width', '4');
+      stick.setAttribute('stroke-linecap', 'round');
+      batonInline.appendChild(stick);
+      const tip = document.createElementNS(SVG_NS, 'circle');
+      tip.setAttribute('cx', '0'); tip.setAttribute('cy', '-70');
+      tip.setAttribute('r', '6');
+      tip.setAttribute('fill', '#ffc857');
+      tip.setAttribute('filter', 'url(#glow)');
+      batonInline.appendChild(tip);
+      pulseG.appendChild(batonInline);
+
+      const star = document.createElementNS(SVG_NS, 'path');
+      star.setAttribute('d', 'M0,-22 L6,-7 L22,-5 L10,5 L14,21 L0,12 L-14,21 L-10,5 L-22,-5 L-6,-7 Z');
+      star.setAttribute('fill', '#ffc857');
+      star.setAttribute('filter', 'url(#glow)');
+      star.setAttribute('opacity', '0.95');
+      pulseG.appendChild(star);
+      const inner = document.createElementNS(SVG_NS, 'circle');
+      inner.setAttribute('r', '8'); inner.setAttribute('fill', '#fff7d6');
+      pulseG.appendChild(inner);
+      const lbl = document.createElementNS(SVG_NS, 'text');
+      lbl.setAttribute('text-anchor', 'middle');
+      lbl.setAttribute('dy', '38');
+      lbl.setAttribute('font-size', '11');
+      lbl.setAttribute('font-weight', '700');
+      lbl.setAttribute('fill', '#ffc857');
+      lbl.textContent = 'Stabführer';
+      pulseG.appendChild(lbl);
+    } else {
+      const c = document.createElementNS(SVG_NS, 'circle');
+      c.setAttribute('r', '15');
+      c.setAttribute('fill', m.role === 'wing' ? '#ffb480' : '#7adfff');
+      c.setAttribute('stroke', m.role === 'wing' ? '#ff9059' : '#3aa9d9');
+      c.setAttribute('stroke-width', '2');
+      pulseG.appendChild(c);
+      const txt = document.createElementNS(SVG_NS, 'text');
+      txt.setAttribute('text-anchor', 'middle');
+      txt.setAttribute('dy', '4');
+      txt.setAttribute('font-size', '10');
+      txt.setAttribute('font-weight', '700');
+      txt.setAttribute('fill', '#0b1020');
+      txt.textContent = (m.linie + 1) + '·' + (m.reihe + 1);
+      pulseG.appendChild(txt);
+    }
+    g.appendChild(pulseG);
+    musiciansG.appendChild(g);
+
+    // Tooltip
+    const title = document.createElementNS(SVG_NS, 'title');
+    if (m.role === 'stab') title.textContent = 'Stabführer';
+    else title.textContent = `${m.linie + 1}. Linie · Reihe ${m.reihe + 1} ${m.role === 'wing' ? '(Flügelmusiker)' : ''}`;
+    g.appendChild(title);
+  }
+}
+
+function applyPhase(phase, animate = true) {
+  // Trail-Effekt nur wenn animate
+  for (const m of musicians) {
+    const tgt = phase.formation(m);
+    const oldX = m.x, oldY = m.y;
+    m.x = tgt.x; m.y = tgt.y;
+    const g = document.getElementById('g_' + m.id);
+    if (!g) continue;
+    if (!animate) g.style.transition = 'none';
+    g.setAttribute('transform', `translate(${m.x} ${m.y})`);
+    if (!animate) {
+      void g.getBoundingClientRect();
+      g.style.transition = '';
+    } else {
+      const dist = Math.hypot(tgt.x - oldX, tgt.y - oldY);
+      if (dist > 25) spawnTrail(oldX, oldY, tgt.x, tgt.y, m.role === 'wing' ? '#ffb480' : '#7adfff', m.linie);
+    }
+    const isKurz = phase.kurz(m);
+    g.classList.remove('kurzschritt', 'normalschritt');
+    if (m.role !== 'stab') {
+      g.classList.add(isKurz ? 'kurzschritt' : 'normalschritt');
+    }
+  }
+  setBaton(phase.baton);
+  setDrum(phase.drum);
+
+  // Schockwelle bei Kommando-Momenten
+  if (animate) {
+    if (phase.baton === 'links') commandShockwave(880, 80, '#ffc857');
+    if (phase.baton === 'grundstellung' && state.phaseIdx > 0) commandShockwave(X_CENTER, STAB_Y, '#ffc857');
+    if (phase.drum === 'signal' || phase.drum === 'normalschritt') commandShockwave(880, 610, '#f72585');
+    if (phase.baton === 'links' || phase.drum === 'signal' || phase.drum === 'normalschritt') {
+      const fw = document.getElementById('formationWrap');
+      fw.classList.add('flash');
+      setTimeout(() => fw.classList.remove('flash'), 220);
+    }
+  }
+
+  document.getElementById('taktValue').textContent = phase.takt;
+  document.getElementById('phaseLabel').textContent = phase.name;
+  document.getElementById('commandText').textContent = phase.command;
+  document.getElementById('descriptionText').innerHTML = applyGlossarTooltips(phase.description);
+  updatePhaseTabs();
+  updateTimelineHighlight();
+  updateTimelineCursor();
+  updateStepMeter(phase);
+  updateRoleAction(phase);
+  applyRoleFilter();
+
+  // Quiz nach letzter Phase
+  toggleQuizVisibility();
+}
+
+function spawnTrail(fromX, fromY, toX, toY, color, staggerIndex = 0) {
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const path = document.createElementNS(SVG_NS, 'path');
+  const cx = (fromX + toX) / 2;
+  const cy = Math.min(fromY, toY) - 25;
+  path.setAttribute('d', `M${fromX},${fromY} Q${cx},${cy} ${toX},${toY}`);
+  path.setAttribute('stroke', color);
+  path.setAttribute('stroke-width', '2');
+  path.setAttribute('fill', 'none');
+  path.setAttribute('opacity', '0');
+  path.setAttribute('stroke-linecap', 'round');
+  annotationsG.appendChild(path);
+  const len = path.getTotalLength();
+  path.style.strokeDasharray = len;
+  path.style.strokeDashoffset = len;
+  setTimeout(() => {
+    const anim = path.animate(
+      [
+        { strokeDashoffset: len, opacity: 0.7 },
+        { strokeDashoffset: 0, opacity: 0 }
+      ],
+      { duration: 900, easing: 'cubic-bezier(.4,0,.2,1)', fill: 'forwards' }
+    );
+    anim.onfinish = () => path.remove();
+  }, staggerIndex * 80);
+}
+
+function commandShockwave(originX, originY, color = '#ffc857') {
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  for (let i = 0; i < 3; i++) {
+    const c = document.createElementNS(SVG_NS, 'circle');
+    c.setAttribute('cx', originX);
+    c.setAttribute('cy', originY);
+    c.setAttribute('r', 8);
+    c.setAttribute('fill', 'none');
+    c.setAttribute('stroke', color);
+    c.setAttribute('stroke-width', '3');
+    c.setAttribute('opacity', '0');
+    annotationsG.appendChild(c);
+    const anim = c.animate(
+      [
+        { r: 8, opacity: 0.85, strokeWidth: 3 },
+        { r: 350, opacity: 0, strokeWidth: 0.5 }
+      ],
+      { duration: 1300, delay: i * 180, easing: 'cubic-bezier(.2,.7,.3,1)', fill: 'forwards' }
+    );
+    anim.onfinish = () => c.remove();
+  }
+}
+
+function setBaton(pos) {
+  const group = document.getElementById('batonGroup');
+  const label = document.getElementById('batonStateLabel');
+  const inline = document.getElementById('formationBaton');
+  let rot = 0, color = '#ffc857', text = 'Grundstellung';
+  if (pos === 'links') { rot = -70; color = '#ffd87a'; text = '← Über Kopfmitte nach links'; }
+  else if (pos === 'grundstellung') { rot = 0; color = '#ffc857'; text = 'Grundstellung'; }
+  else if (pos === 'hoch') { rot = 0; color = '#ffd87a'; text = 'Senkrecht'; }
+  group.setAttribute('transform', `rotate(${rot} 0 80)`);
+  group.querySelector('line').setAttribute('stroke', color);
+  group.querySelector('circle').setAttribute('fill', color);
+  label.textContent = text;
+  label.setAttribute('fill', pos === 'links' ? '#ffd87a' : '#a8b0c8');
+  // Live-Stab am Stabführer mitrotieren
+  if (inline) {
+    inline.setAttribute('transform', `rotate(${rot} 0 -10)`);
+    inline.querySelector('line').setAttribute('stroke', color);
+    inline.querySelector('circle').setAttribute('fill', color);
+  }
+}
+
+function setDrum(s) {
+  const flash = document.getElementById('drumFlash');
+  const label = document.getElementById('drumLabel');
+  if (state.drumTimeout) { clearTimeout(state.drumTimeout); state.drumTimeout = null; }
+  flash.classList.remove('flash');
+  if (s === 'signal') {
+    flash.classList.add('flash');
+    label.textContent = 'SIGNAL!';
+    label.setAttribute('fill', '#ff7a9c');
+    if (state.sound) playBoom();
+    state.drumTimeout = setTimeout(() => flash.classList.remove('flash'), 450);
+  } else if (s === 'normalschritt') {
+    flash.classList.add('flash');
+    label.textContent = 'NORMALSCHRITT';
+    label.setAttribute('fill', '#6bcf7f');
+    if (state.sound) playBoom();
+    state.drumTimeout = setTimeout(() => flash.classList.remove('flash'), 600);
+  } else {
+    label.textContent = '—';
+    label.setAttribute('fill', '#a8b0c8');
+  }
+}
+
+function updateStepMeter(phase) {
+  // Markiere die aktive Schrittart
+  // Wenn alle im Normalschritt → normalRow aktiv
+  // Wenn jemand im Kurzschritt → kurzRow aktiv
+  const anyKurz = musicians.some(m => phase.kurz(m));
+  const normalRow = document.getElementById('stepNormalRow');
+  const kurzRow = document.getElementById('stepKurzRow');
+  normalRow.classList.toggle('active', !anyKurz);
+  kurzRow.classList.toggle('active', anyKurz);
+}
+
+function updateRoleAction(phase) {
+  const box = document.getElementById('myAction');
+  if (state.role === 'all') {
+    box.classList.add('hidden');
+    return;
+  }
+  box.classList.remove('hidden');
+  box.innerHTML = `<span class="icon">👉</span><strong>Du:</strong> ${actionForRole(state.role, phase)}`;
+}
+
+function applyRoleFilter() {
+  for (const m of musicians) {
+    const g = document.getElementById('g_' + m.id);
+    if (!g) continue;
+    g.classList.remove('dim', 'spotlight');
+    if (state.role === 'all') continue;
+    let match = false;
+    if (state.role === 'stab' && m.role === 'stab') match = true;
+    else if (state.role === 'wing' && m.role === 'wing') match = true;
+    else if (state.role === 'front' && m.linie === 0) match = true;
+    else if (state.role === 'center' && m.role === 'center' && m.linie > 0) match = true;
+    if (match) g.classList.add('spotlight');
+    else g.classList.add('dim');
+  }
+}
+
+/* ==========================================================
+   PLAYBACK
+   ========================================================== */
+function tick(ts) {
+  if (!state.playing) return;
+  if (!state.lastTimestamp) state.lastTimestamp = ts;
+  const dt = ts - state.lastTimestamp;
+  state.lastTimestamp = ts;
+  state.phaseElapsed += dt;
+  const dur = phaseDurationMs();
+  const beatIdx = Math.min(state.beatsPerPhase - 1, Math.floor(state.phaseElapsed / (dur / state.beatsPerPhase)));
+  if (beatIdx !== state.lastBeatIndex) {
+    state.lastBeatIndex = beatIdx;
+    updateBeats(beatIdx);
+    if (state.sound) playClick(beatIdx === 0 ? 1500 : 1100);
+  }
+  updateTimelineCursor();
+  if (state.phaseElapsed >= dur) {
+    nextPhase();
+  } else {
+    state.rafId = requestAnimationFrame(tick);
+  }
+}
+
+function updateBeats(active) {
+  const dots = document.querySelectorAll('.beat-dot');
+  dots.forEach((d, i) => d.classList.toggle('active', i === active));
+}
+
+function play() {
+  if (state.rafId) cancelAnimationFrame(state.rafId);
+  if (state.phaseIdx >= currentVariant().phases.length - 1 && state.phaseElapsed >= phaseDurationMs() - 50) {
+    state.phaseIdx = 0;
+    state.phaseElapsed = 0;
+    applyPhase(currentPhase());
+  }
+  state.playing = true;
+  state.lastTimestamp = 0;
+  state.lastBeatIndex = -1;
+  document.getElementById('playBtn').textContent = '⏸';
+  document.getElementById('playBtn').setAttribute('aria-label', 'Pause');
+  document.getElementById('playBtn').classList.remove('pulse');
+  state.rafId = requestAnimationFrame(tick);
+}
+
+function pause() {
+  if (state.rafId) { cancelAnimationFrame(state.rafId); state.rafId = null; }
+  state.playing = false;
+  document.getElementById('playBtn').textContent = '▶';
+  document.getElementById('playBtn').setAttribute('aria-label', 'Abspielen');
+}
+
+function togglePlay() { state.playing ? pause() : play(); }
+
+function nextPhase() {
+  if (state.phaseIdx < currentVariant().phases.length - 1) {
+    state.phaseIdx++;
+    state.phaseElapsed = 0;
+    state.lastBeatIndex = -1;
+    applyPhase(currentPhase());
+    if (state.playing) state.rafId = requestAnimationFrame(tick);
+  } else {
+    if (state.loop) {
+      state.phaseIdx = 0;
+      state.phaseElapsed = 0;
+      state.lastBeatIndex = -1;
+      applyPhase(currentPhase());
+      if (state.playing) state.rafId = requestAnimationFrame(tick);
+    } else {
+      pause();
+      state.phaseElapsed = phaseDurationMs();
+    }
+  }
+}
+
+function prevPhase() {
+  if (state.phaseElapsed > 1000) {
+    state.phaseElapsed = 0;
+    applyPhase(currentPhase());
+    return;
+  }
+  if (state.phaseIdx > 0) {
+    state.phaseIdx--;
+    state.phaseElapsed = 0;
+    applyPhase(currentPhase());
+  }
+}
+
+function reset() {
+  pause();
+  state.phaseIdx = 0;
+  state.phaseElapsed = 0;
+  applyPhase(currentPhase());
+}
+
+function selectVariant(idx, animate = true) {
+  if (idx === state.variantIdx && animate) return;
+  pause();
+  state.variantIdx = idx;
+  state.phaseIdx = 0;
+  state.phaseElapsed = 0;
+  buildVariantButtons();
+  buildPhaseTabs();
+  buildTimeline();
+  applyPhase(currentPhase(), false);
+  if (animate) {
+    const v = currentVariant();
+    heroCard(`Variante ${idx + 1}`, v.short, v.subtitle);
+  }
+  buildQuiz();
+}
+
+/* ==========================================================
+   HERO CARD
+   ========================================================== */
+function heroCard(num, title, subtitle) {
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const el = document.createElement('div');
+  el.className = 'hero-card';
+  el.innerHTML = `<div class="inner">
+    <div class="num">${num}</div>
+    <h2>${title}</h2>
+    <p>${subtitle || ''}</p>
+  </div>`;
+  document.body.appendChild(el);
+  el.animate([
+    { opacity: 0, transform: 'scale(0.94)' },
+    { opacity: 1, transform: 'scale(1)', offset: 0.18 },
+    { opacity: 1, transform: 'scale(1)', offset: 0.78 },
+    { opacity: 0, transform: 'scale(1.04)' }
+  ], { duration: 1600, easing: 'cubic-bezier(.4,0,.2,1)' }).onfinish = () => el.remove();
+}
+
+/* ==========================================================
+   AUDIO (optional)
+   ========================================================== */
+function ensureAudio() {
+  if (!state.audioCtx) {
+    try { state.audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+    catch { return null; }
+  }
+  if (state.audioCtx.state === 'suspended') state.audioCtx.resume();
+  return state.audioCtx;
+}
+function playClick(freq = 1200) {
+  const ac = ensureAudio(); if (!ac) return;
+  const o = ac.createOscillator(), g = ac.createGain();
+  o.frequency.value = freq;
+  o.type = 'square';
+  g.gain.setValueAtTime(0.0001, ac.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.08, ac.currentTime + 0.005);
+  g.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + 0.05);
+  o.connect(g); g.connect(ac.destination);
+  o.start(); o.stop(ac.currentTime + 0.08);
+}
+function playBoom() {
+  const ac = ensureAudio(); if (!ac) return;
+  const o = ac.createOscillator(), g = ac.createGain();
+  o.frequency.setValueAtTime(140, ac.currentTime);
+  o.frequency.exponentialRampToValueAtTime(40, ac.currentTime + 0.3);
+  g.gain.setValueAtTime(0.4, ac.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.5);
+  o.connect(g); g.connect(ac.destination);
+  o.start(); o.stop(ac.currentTime + 0.5);
+}
+
+/* ==========================================================
+   UI BUILDERS
+   ========================================================== */
+function buildVariantButtons() {
+  const nav = document.getElementById('variants');
+  nav.innerHTML = '';
+  VARIANTS.forEach((v, i) => {
+    const b = document.createElement('button');
+    b.className = 'variant-btn' + (i === state.variantIdx ? ' active' : '');
+    b.innerHTML = `<span class="num">${i+1}</span> ${v.short}`;
+    b.title = v.subtitle + '\nEinsatz: ' + v.whenUsed;
+    b.setAttribute('role', 'tab');
+    b.setAttribute('aria-selected', i === state.variantIdx);
+    b.addEventListener('click', () => selectVariant(i));
+    nav.appendChild(b);
+  });
+}
+
+function buildPhaseTabs() {
+  const nav = document.getElementById('phases');
+  if (!nav) return; // Phase-Tabs entfernt — Flow-Diagramm hat die Funktion übernommen
+  nav.innerHTML = '';
+  currentVariant().phases.forEach((p, i) => {
+    const b = document.createElement('button');
+    b.className = 'phase-tab' + (i === state.phaseIdx ? ' active' : '');
+    b.textContent = `${i+1}. ${p.name}`;
+    b.title = p.command;
+    b.addEventListener('click', () => {
+      pause();
+      state.phaseIdx = i;
+      state.phaseElapsed = 0;
+      applyPhase(currentPhase());
+    });
+    nav.appendChild(b);
+  });
+}
+
+function updatePhaseTabs() {
+  document.querySelectorAll('.phase-tab').forEach((t, i) => {
+    t.classList.toggle('active', i === state.phaseIdx);
+    if (i === state.phaseIdx) t.scrollIntoView({behavior:'smooth', inline:'center', block:'nearest'});
+  });
+}
+
+/* ==========================================================
+   ECHTE NOTENZEILE — SVG-basiert, mit Notation
+   ========================================================== */
+const NOTA = {
+  TAKT_W: 95,         // px pro Takt
+  NOTE_Y: 92,         // y-Achse der Notenlinie
+  PHASE_Y: 6,         // y-Achse der Phasen-Bänder
+  PHASE_H: 22,        // Höhe Phasen-Band
+  SYMBOL_Y: 56,       // y-Achse Stab/Trommel-Symbole
+  TAKT_NUM_Y: 128,    // y für Taktnummer
+  NOTATION_H: 142,
+  PRE_W: 50,          // Platz für Taktart vorne
+};
+
+const PHASE_COLORS = ['#ffc857','#4cc9f0','#f72585','#6bcf7f','#a78bfa','#ff9e3d','#22d3ee','#ec4899','#fbbf24','#34d399'];
+
+function buildTimeline() {
+  const phases = currentVariant().phases;
+  const track = document.getElementById('timelineTrack');
+  if (!track) return;
+  const cursor = document.getElementById('timelineCursor');
+  track.innerHTML = '';
+  track.appendChild(cursor);
+
+  phases.forEach((p, i) => {
+    const block = document.createElement('div');
+    block.className = 'ti-block';
+    block.dataset.phaseIdx = i;
+    const dur = p.duration || 1;
+    block.title = (i + 1) + '. ' + p.name + '\nTakt ' + p.takt + (dur > 1 ? '–' + (p.takt + dur - 1) : '') + '\n' + p.command;
+
+    const icons = [];
+    if (p.baton === 'links') icons.push('<span class="ti-ic stab" title="Stab nach links">↖</span>');
+    else if (p.baton === 'grundstellung' && (i === 0 || phases[i-1].baton === 'links')) icons.push('<span class="ti-ic stab" title="Stab Grundstellung">↓</span>');
+    if (p.drum === 'signal') icons.push('<span class="ti-ic drum" title="Trommel-Signal">🥁</span>');
+    else if (p.drum === 'normalschritt') icons.push('<span class="ti-ic drum" title="Trommel: Normalschritt">🥁</span>');
+
+    const taktLabel = dur > 1 ? ('T.' + p.takt + '–' + (p.takt + dur - 1)) : ('Takt ' + p.takt);
+    const beatsHtml = Array.from({length: 4 * dur}, (_, b) => '<span class="ti-beat" data-b="' + b + '"></span>').join('');
+
+    block.innerHTML =
+      '<div class="ti-takt-num">' + taktLabel + '</div>' +
+      '<div class="ti-icons">' + icons.join('') + '</div>' +
+      '<div class="ti-beats" data-beats="' + (4 * dur) + '">' + beatsHtml + '</div>' +
+      '<div class="ti-name">' + (i + 1) + '. ' + p.name.replace(/^🥁\s*/, '') + '</div>';
+
+    block.addEventListener('click', () => {
+      pause();
+      state.phaseIdx = i;
+      state.phaseElapsed = 0;
+      applyPhase(currentPhase());
+    });
+    track.insertBefore(block, cursor);
+  });
+  // Block-Breite proportional zur Takt-Dauer (Cursor läuft konstant, lange Phasen sind visuell breiter)
+  const isMobile = window.matchMedia('(max-width: 600px)').matches;
+  const perTakt = isMobile ? 48 : 64;
+  const minBase = isMobile ? 60 : 78;
+  document.querySelectorAll('.ti-block').forEach((b, i) => {
+    const d = phases[i].duration || 1;
+    const w = Math.max(minBase, perTakt * d);
+    b.style.flex = '0 0 ' + w + 'px';
+    b.style.minWidth = w + 'px';
+  });
+  updateTimelineHighlight();
+  requestAnimationFrame(function() { updateTimelineCursor(); });
+}
+
+function updateTimelineHighlight() {
+  var blocks = document.querySelectorAll('.ti-block');
+  blocks.forEach(function(b, i) {
+    b.classList.toggle('active', i === state.phaseIdx);
+    b.classList.toggle('played', i < state.phaseIdx);
+    if (i !== state.phaseIdx) {
+      b.querySelectorAll('.ti-beat').forEach(function(d) {
+        d.classList.remove('current');
+        d.classList.toggle('played', i < state.phaseIdx);
+      });
+    }
+  });
+  var activeBlock = blocks[state.phaseIdx];
+  if (activeBlock) {
+    var track = document.getElementById('timelineTrack');
+    if (track) {
+      var targetLeft = activeBlock.offsetLeft - track.clientWidth / 2 + activeBlock.offsetWidth / 2;
+      track.scrollTo({ left: Math.max(0, targetLeft), behavior: 'smooth' });
+    }
+  }
+}
+
+function updateTimelineCursor() {
+  var cursor = document.getElementById('timelineCursor');
+  var blocks = document.querySelectorAll('.ti-block');
+  if (!cursor || !blocks[state.phaseIdx]) return;
+  var block = blocks[state.phaseIdx];
+  var dur = phaseDurationMs();
+  var progress = Math.min(1, state.phaseElapsed / dur);
+  var left = block.offsetLeft + block.offsetWidth * progress;
+  cursor.style.left = left + 'px';
+  var beats = block.querySelectorAll('.ti-beat');
+  var beatCount = beats.length || 4;
+  var beatIdx = Math.min(beatCount - 1, Math.floor(progress * beatCount));
+  beats.forEach(function(d, i) {
+    d.classList.toggle('current', i === beatIdx);
+    d.classList.toggle('played', i < beatIdx);
+  });
+}
+
+function buildQuiz() {
+  const wrap = document.getElementById('quizContent');
+  wrap.innerHTML = '';
+  const score = document.getElementById('quizScore');
+  score.textContent = '';
+  const qs = QUIZZES[state.variantIdx];
+  const answered = new Array(qs.length).fill(null);
+  qs.forEach((q, qi) => {
+    const div = document.createElement('div');
+    div.className = 'quiz-q';
+    div.innerHTML = `<div class="qtext">${qi + 1}. ${q.q}</div>`;
+    const opts = document.createElement('div');
+    opts.className = 'opts';
+    q.opts.forEach((o, oi) => {
+      const btn = document.createElement('button');
+      btn.className = 'quiz-opt';
+      btn.textContent = o;
+      btn.addEventListener('click', () => {
+        if (answered[qi] !== null) return;
+        answered[qi] = oi;
+        opts.querySelectorAll('.quiz-opt').forEach((b, bi) => {
+          if (bi === q.correct) b.classList.add('correct');
+          else if (bi === oi) b.classList.add('wrong');
+        });
+        const fb = document.createElement('div');
+        fb.className = 'quiz-feedback';
+        fb.textContent = q.fb;
+        div.appendChild(fb);
+        // Score
+        const done = answered.filter(a => a !== null).length;
+        const correct = answered.filter((a, i) => a === qs[i].correct).length;
+        if (done === qs.length) {
+          score.textContent = `Ergebnis: ${correct} / ${qs.length} richtig${correct === qs.length ? ' — perfekt! 🎉' : ''}`;
+        }
+      });
+      opts.appendChild(btn);
+    });
+    div.appendChild(opts);
+    wrap.appendChild(div);
+  });
+}
+
+function toggleQuizVisibility() {
+  const sec = document.getElementById('quizSection');
+  const isLast = state.phaseIdx === currentVariant().phases.length - 1;
+  sec.hidden = !isLast;
+}
+
+/* ==========================================================
+   INIT & EVENT BINDINGS
+   ========================================================== */
+renderMusicians();
+buildVariantButtons();
+buildPhaseTabs();
+buildTimeline();
+buildQuiz();
+applyPhase(currentPhase(), false);
+window.addEventListener('resize', () => { updateTimelineCursor(); });
+
+document.getElementById('playBtn').addEventListener('click', () => { ensureAudio(); togglePlay(); });
+document.getElementById('nextBtn').addEventListener('click', () => { pause(); nextPhase(); });
+document.getElementById('prevBtn').addEventListener('click', () => { pause(); prevPhase(); });
+document.getElementById('resetBtn').addEventListener('click', reset);
+
+document.getElementById('loopBtn').addEventListener('click', (e) => {
+  state.loop = !state.loop;
+  e.currentTarget.classList.toggle('on', state.loop);
+  e.currentTarget.setAttribute('aria-pressed', state.loop);
+});
+document.getElementById('soundBtn').addEventListener('click', (e) => {
+  state.sound = !state.sound;
+  e.currentTarget.classList.toggle('on', state.sound);
+  e.currentTarget.setAttribute('aria-pressed', state.sound);
+  e.currentTarget.textContent = state.sound ? '🔊' : '🔇';
+  if (state.sound) ensureAudio();
+});
+
+document.getElementById('flowToggle').addEventListener('click', (e) => {
+  const fd = document.getElementById('flowDiagram');
+  const isExpanded = fd.dataset.expanded === 'true';
+  fd.dataset.expanded = isExpanded ? 'false' : 'true';
+  e.currentTarget.textContent = isExpanded ? '↕ Alle anzeigen' : '↕ Kompakt';
+});
+
+document.getElementById('roleFilter').addEventListener('change', (e) => {
+  state.role = e.target.value;
+  applyRoleFilter();
+  updateRoleAction(currentPhase());
+});
+
+document.getElementById('speedRange').addEventListener('input', (e) => {
+  state.speed = parseFloat(e.target.value);
+  document.getElementById('speedLabel').textContent = state.speed.toFixed(1) + '×';
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.ctrlKey || e.metaKey || e.altKey) return;
+  if (e.code === 'Space') { e.preventDefault(); togglePlay(); }
+  else if (e.key === 'ArrowRight') { e.preventDefault(); pause(); nextPhase(); }
+  else if (e.key === 'ArrowLeft') { e.preventDefault(); pause(); prevPhase(); }
+  else if (e.key === '1') selectVariant(0);
+  else if (e.key === '2') selectVariant(1);
+  else if (e.key === '3') selectVariant(2);
+  else if (e.key.toLowerCase() === 'r') reset();
+});
+
+</script>
+</body>
+</html>
